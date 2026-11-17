@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="חנייה עכשיו">
+<meta name="description" content="חוקי חנייה בתל אביב-יפו לפי המיקום שלך, על בסיס מקורות רשמיים בלבד.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>חנייה עכשיו – אב טיפוס</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f3f4f6; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --ok:#15803d; --ok-bg:#dcfce7; --no:#b91c1c; --no-bg:#fee2e2; --cond:#a16207; --cond-bg:#fef3c7;
+    --accent:#1d4ed8; --accent-bg:#eff6ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Heebo,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+  header{background:var(--ink);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+  header .logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;font-weight:800}
+  header h1{font-size:18px;margin:0;font-weight:700}
+  header .tag{margin-inline-start:auto;font-size:12px;opacity:.75}
+  main{max-width:520px;margin:0 auto;padding:14px 14px 40px;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--line)}
+  .card h2{font-size:16px;margin:0 0 10px;font-weight:700}
+  .muted{color:var(--muted);font-size:14px}
+  button{font-family:inherit;font-size:15px;cursor:pointer;color:var(--ink)}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-weight:500}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.small{font-size:13px;padding:6px 10px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+  /* --- סיכום המקום --- */
+  .place-head{display:flex;gap:10px;align-items:flex-start}
+  .place-head .pin{font-size:24px;line-height:1}
+  .place-title{font-size:19px;font-weight:800;line-height:1.3}
+  .day-strip{margin-top:12px;border-radius:12px;padding:10px 12px;background:var(--accent-bg);border:1px solid #bfdbfe}
+  .day-strip.special{background:#f5f3ff;border-color:#ddd6fe}
+  .day-strip b{font-size:15px}
+  .status{margin-top:10px;border-radius:12px;padding:12px;border:2px solid transparent}
+  .status.ok{background:var(--ok-bg);border-color:var(--ok)}
+  .status.cond{background:var(--cond-bg);border-color:var(--cond)}
+  .status.no{background:var(--no-bg);border-color:var(--no)}
+  .status.unk{background:#f1f5f9;border-color:#94a3b8}
+  .status .s-label{font-size:12px;font-weight:700;color:var(--muted)}
+  .status .s-main{font-size:20px;font-weight:800;line-height:1.3}
+  .status .s-sub{font-size:14px;margin-top:2px}
+  .sec{margin-top:14px}
+  .sec-h{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .who{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .who:last-child{border-bottom:none}
+  .who.me{background:var(--accent-bg);margin:0 -8px;padding:7px 8px;border-radius:8px;border-bottom:none}
+  .who b{white-space:nowrap}
+  .lists{display:grid;grid-template-columns:1fr;gap:8px}
+  .list{border-radius:10px;padding:10px 12px}
+  .list.allow{background:var(--ok-bg)}
+  .list.deny{background:var(--no-bg)}
+  .list h3{margin:0 0 4px;font-size:14px}
+  .list ul{margin:0;padding-inline-start:18px;font-size:14px}
+  .list li{margin-bottom:3px}
+  .warn{margin-top:10px;padding:9px 11px;border-radius:10px;background:var(--cond-bg);font-size:14px;font-weight:500}
+  .upcoming{font-size:14px}
+  .upcoming .u-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .upcoming .u-row:last-child{border-bottom:none}
+  .upcoming .u-when{color:var(--muted);white-space:nowrap}
+  .stamp{margin-top:12px;font-size:12px;color:var(--muted)}
+
+  /* --- אבני שפה ותשובה --- */
+  .curbs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .curb{border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:right;display:flex;flex-direction:column;gap:8px}
+  .curb[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
+  .stripe{height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.15)}
+  .s-blue{background:repeating-linear-gradient(90deg,#1d4ed8 0 22px,#fff 22px 44px)}
+  .s-redwhite{background:repeating-linear-gradient(90deg,#dc2626 0 22px,#fff 22px 44px)}
+  .s-redyellow{background:repeating-linear-gradient(90deg,#dc2626 0 22px,#facc15 22px 44px)}
+  .s-none{background:#9ca3af}
+  .curb b{font-size:15px}
+  .curb span{font-size:12px;color:var(--muted)}
+  .verdict{border-radius:16px;padding:18px;border:2px solid transparent}
+  .verdict.ok{background:var(--ok-bg);border-color:var(--ok)}
+  .verdict.no{background:var(--no-bg);border-color:var(--no)}
+  .verdict.cond{background:var(--cond-bg);border-color:var(--cond)}
+  .verdict.unk{background:#f1f5f9;border-color:#94a3b8}
+  .unk .v-badge{background:#64748b}
+  .verdict.idle{display:none}
+  .v-badge{display:inline-block;font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;color:#fff;margin-bottom:6px}
+  .ok .v-badge{background:var(--ok)} .no .v-badge{background:var(--no)} .cond .v-badge{background:var(--cond)}
+  .v-title{font-size:24px;font-weight:800;margin:0 0 4px;line-height:1.25}
+  .v-sub{margin:0}
+  .v-warn{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.7);font-size:14px;font-weight:500}
+  .v-change{margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,0,0,.1);font-weight:700}
+  .v-change small{font-weight:400;color:var(--muted)}
+
+  /* --- הגדרות ומקורות --- */
+  details.card summary{font-weight:700;cursor:pointer;list-style:none}
+  details.card summary::-webkit-details-marker{display:none}
+  details.card summary::after{content:"▾";float:left;color:var(--muted)}
+  details[open].card summary::after{content:"▴"}
+  .field{display:flex;flex-direction:column;gap:4px;margin-top:12px}
+  .field label{font-size:14px;font-weight:500}
+  .field small{color:var(--muted);font-size:12px}
+  input,select{font-family:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .pair{display:flex;gap:8px;align-items:center}
+  .pair input{flex:1;min-width:0}
+  .sep{border:none;border-top:1px solid var(--line);margin:16px 0 4px}
+  .set-title{font-size:13px;font-weight:700;color:var(--muted);margin-top:14px}
+  .time-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .time-row input{flex:1;min-width:180px}
+  .saved{font-size:12px;color:var(--ok);margin-inline-start:6px;opacity:0;transition:opacity .3s}
+  .saved.show{opacity:1}
+  ol.sources{margin:6px 0 0;padding-inline-start:20px;font-size:13px}
+  ol.sources li{margin-bottom:6px}
+  ol.sources a{color:var(--accent);word-break:break-word}
+  .disclaimer{font-size:12px;color:var(--muted);text-align:center;margin:4px 8px}
+</style>
+</head>
+<body>
+<style>
+  .search{position:relative;margin-top:10px}
+  .search input{width:100%}
+  .results{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .results button{text-align:right;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:15px}
+  .results button.cur{border-color:var(--accent);background:var(--accent-bg);font-weight:700}
+  .results .r-sub{display:block;font-size:12px;color:var(--muted);font-weight:400}
+  .facts{list-style:none;margin:0;padding:0;font-size:14px}
+  .facts li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:8px}
+  .facts li:last-child{border-bottom:none}
+  .facts .ic{flex:none;width:22px;text-align:center}
+  .facts q{font-style:normal;background:#f1f5f9;border-radius:6px;padding:1px 6px;display:inline}
+  .facts q::before,.facts q::after{content:""}
+  .loc-line{font-size:14px;margin-top:6px}
+  .pay{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+  .pay a{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:10px 8px;font-weight:700;background:var(--accent);color:#fff}
+  .pay a small{display:block;font-weight:400;font-size:12px;opacity:.85}
+</style>
+<header>
+  <div class="logo">P</div>
+  <h1>חנייה עכשיו</h1>
+  <span class="tag">גרסה 4.2</span>
+</header>
+
+<main>
+  <!-- 0. איפה אתה -->
+  <section class="card" id="where">
+    <h2>איפה אתה?</h2>
+    <div class="muted" id="gpsLine">בודק אם יש גישה למיקום…</div>
+    <div class="search">
+      <input type="search" id="streetInput" placeholder="הקלד שם רחוב בתל אביב-יפו" autocomplete="off" aria-label="חיפוש רחוב">
+    </div>
+    <div class="results" id="streetResults"></div>
+    <div class="results" id="segResults"></div>
+  </section>
+
+  <!-- 1. מה ידוע על המקום -->
+  <section class="card" id="place" aria-live="polite"></section>
+
+  <!-- 2. תשובה למקום המדויק -->
+  <section class="card">
+    <h2>רוצה תשובה למקום שעצרת בו? בחר את צבע אבן השפה</h2>
+    <div class="curbs">
+      <button class="curb" data-curb="blue" aria-pressed="false"><div class="stripe s-blue"></div><b>כחול-לבן</b><span>חנייה בתשלום או לבעלי תו</span></button>
+      <button class="curb" data-curb="none" aria-pressed="false"><div class="stripe s-none"></div><b>ללא סימון</b><span>אבן שפה אפורה</span></button>
+      <button class="curb" data-curb="redwhite" aria-pressed="false"><div class="stripe s-redwhite"></div><b>אדום-לבן</b><span>איסור עצירה וחנייה</span></button>
+      <button class="curb" data-curb="redyellow" aria-pressed="false"><div class="stripe s-redyellow"></div><b>אדום-צהוב</b><span>עצירה לרכב מסוים בלבד</span></button>
+    </div>
+  </section>
+  <section id="verdict" class="verdict idle" aria-live="polite"></section>
+
+  <!-- 3. בדיקה לשעה אחרת -->
+  <section class="card">
+    <h2>לבדוק ליום או לשעה אחרת?</h2>
+    <div class="time-row">
+      <input type="datetime-local" id="whenInput" aria-label="תאריך ושעה לבדיקה">
+      <button class="btn small" id="nowBtn">עכשיו</button>
+    </div>
+    <div class="muted" id="whenNote" style="margin-top:6px">מציג את המצב לשעה הנוכחית.</div>
+  </section>
+
+  <!-- 4. הגדרות -->
+  <details class="card" id="settings">
+    <summary>ההגדרות שלי <span class="saved" id="savedTag">נשמר ✓</span></summary>
+    <div class="set-title">התו שלי</div>
+    <div class="field">
+      <label for="permit">תו חנייה של תל אביב-יפו</label>
+      <select id="permit">
+        <option value="none">אין לי תו של תל אביב</option>
+        <option value="tlv">יש לי תו חנייה של תל אביב-יפו</option>
+      </select>
+    </div>
+    <div class="field" id="myZoneField">
+      <label for="myZone">מספר האזור שעל התו שלי</label>
+      <select id="myZone">
+        <option value="">בחר אזור</option>
+        <option>1</option><option>2</option><option>4</option><option>6</option><option>7</option>
+        <option>9</option><option>10</option><option>12</option><option>13</option>
+      </select>
+    </div>
+
+    <hr class="sep">
+    <div class="set-title" id="blueTitle">מה כתוב על התמרור ברחוב</div>
+    <div id="blueNoStreet" class="muted" style="margin-top:6px">בחר קודם רחוב למעלה.</div>
+    <div id="blueFields">
+      <div class="field">
+        <label for="blueType">סוג החנייה בכחול-לבן</label>
+        <select id="blueType">
+          <option value="unknown">עוד לא בדקתי</option>
+          <option value="regulated">חנייה בתשלום לכל אחד (מוסדרת)</option>
+          <option value="preferred" id="prefOpt">חנייה לבעלי תו האזור בלבד (מועדפת)</option>
+        </select>
+        <small>יש בעיר שני סוגים של כחול-לבן. רק התמרור ברחוב אומר איזה מהם יש כאן. מה שתבחר נשמר לרחוב הזה בלבד.</small>
+      </div>
+      <div class="field" id="prefHours">
+        <label>בשעות (כמו שכתוב על התמרור)</label>
+        <div class="pair"><input type="time" id="prefStart"><span>עד</span><input type="time" id="prefEnd"></div>
+        <small>אם התמרור לא מציין שעות, השאר ריק. אז האפליקציה תניח שזה כל היום.</small>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="row"><button class="btn small" id="resetBtn">איפוס כל ההגדרות</button></div>
+  </details>
+
+  <!-- 5. מקורות -->
+  <details class="card">
+    <summary>מקורות ומה אומת</summary>
+    <ol class="sources">
+      <li>תקנות התעבורה, התשכ"א-1961, תקנה 72: מקומות שאסור לעצור ולחנות בהם.<br><a href="https://judgments.org.il/laws/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA-%D7%94%D7%AA%D7%A2%D7%91%D7%95%D7%A8%D7%94-%D7%94%D7%AA%D7%A9%D7%9B%D7%90-1961/" target="_blank" rel="noopener">נוסח התקנות</a></li>
+      <li>לוח התמרורים (תשע"א-2010, נוסח משולב 2020): 817 כחול-לבן, 818 אדום-לבן, 820 שטח אסור לחנייה מסומן בלבן, 439 תמרור מסר מחייב.<br><a href="https://www.nevo.co.il/law_html/law01/500_427.htm" target="_blank" rel="noopener">לוח התמרורים</a> · <a href="https://meyda.education.gov.il/files/zahav/ALYesodi/luach-tamrurim-2021.pdf" target="_blank" rel="noopener">נוסח משולב (PDF)</a></li>
+      <li>עיריית תל אביב-יפו, הסדרי החניה 2025: אזורים, שעות תשלום (א׳–ה׳, שישי וערבי חג), תו חנייה, חנייה מועדפת ומוסדרת.<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת העירייה (PDF)</a></li>
+      <li>עיריית תל אביב-יפו, מדיניות חנייה: 9 אזורים בתוקף.<br><a href="https://www.tel-aviv.gov.il/Residents/Transportation/Pages/parkingpolicy.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
+      <li>אפליקציות התשלום: עיריית תל אביב-יפו מציינת את פנגו, סלו ואיזיפארק. הכפתורים מובילים לדפי האפליקציות הרשמיים ב-App Store וב-Google Play.<br><a href="https://www.tel-aviv.gov.il/About/Pages/transportation.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
+      <li>פנגו: תעריפים בתל אביב-יפו, מרכז העיר בלבד (אזורים 6, 7, 9, 10). לשאר האזורים אין באפליקציה תעריף מאומת.<br><a href="https://land.pango.co.il/FastPark/ParkingRates/ParkingRates" target="_blank" rel="noopener">טבלת התעריפים</a></li>
+      <li>עיריית תל אביב-יפו, מערכת המיפוי (GIS), עותק מ-15.11.2026: אזורי חניה (544), צירי רחוב (507), צמתים (836, 547), תחנות אוטובוס (956), תמרורי וקווי פריקה וטעינה (449, 450), נתיבי תחבורה ציבורית (611), רחובות מוטי הליכה (659), עבודות כבישים (852), חניונים פרטיים (555), תחנות מוניות (691), אוטותל (602), אופנועים (951), כלים זעירים (860), אזורי גרירה (616), חניוני לילה לתושבים (488), אחוזות החוף (970), חניונים ציבוריים (556). במערכת אין שכבה של תמרורי חנייה רגילים או של צבעי אבני שפה.<br><a href="https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer" target="_blank" rel="noopener">שירות המפות של העירייה</a></li>
+      <li><b>עותק ולא נתונים חיים:</b> האפליקציה לא יכולה לפנות לשרת של העירייה, ולכן היא משתמשת בעותק מ-15.11.2026. עבודות כבישים ותמרורים יכולים להשתנות מאז. מצב התפוסה בחניונים ודיווחי ווייז לא מוצגים, כי הם טובים רק בזמן אמת.</li>
+      <li><b>שבת וחג:</b> החוברת הרשמית קובעת שעות תשלום רק לימים א׳–ה׳ ולשישי וערבי חג. מכאן שבשבת ובחג אין תשלום.</li>
+      <li><b>אין מידע ודאי:</b> חול המועד, יום הזיכרון ויום העצמאות. בימים האלה האפליקציה לא נותנת תשובה על תשלום, ומפנה לתמרור.</li>
+      <li><b>פרטיות:</b> המיקום וההגדרות שלך נשארים בטלפון. האפליקציה לא שולחת אותם לשום שרת, ולא אוספת מידע על המשתמשים.</li>
+      <li><b>הכלל באפליקציה:</b> כשאין מקור ודאי, האפליקציה כותבת "אין לי מידע ודאי" ולא מנחשת.</li>
+      <li><b>הודעות מיוחדות:</b> העירייה מכריזה לפעמים על חנייה חינם בכחול-לבן (למשל ביום בחירות או במצב חירום). האפליקציה לא יודעת על הודעות כאלה.</li>
+    </ol>
+  </details>
+
+  <p class="disclaimer">המידע לעזרה בלבד. התמרור והסימון בשטח קובעים תמיד.</p>
+</main>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* =================== נתונים ומקורות =================== */
+  var D = window.PARKING_DATA || null;
+  var RULES_CHECKED = "15.11.2026";
+  var CENTER_ZONES = ["6","7","9","10"];                 // תשלום עד 21:00
+  var RATE_VISITOR_CENTER = "12.40", RATE_RESIDENT_CENTER = "8.68";   // פנגו, מרכז העיר בלבד
+
+  // אפליקציות תשלום שעיריית תל אביב-יפו מציינת באתרה. קישורים לדפי האפליקציה הרשמיים בחנויות.
+  // איזיפארק לא נכללה: לא אומת איזו אפליקציה פועלת בעיר.
+  var PAY_APPS = [
+    { name:"סלו", ios:"https://apps.apple.com/app/id499993633", android:"https://play.google.com/store/apps/details?id=air.com.cellogroup.Cellopark" },
+    { name:"פנגו", ios:"https://apps.apple.com/app/id434818173", android:"https://play.google.com/store/apps/details?id=com.unicell.pangoandroid" }
+  ];
+  function payPlatform(){ var u = navigator.userAgent || ""; return /iPhone|iPad|iPod/i.test(u) ? "ios" : /Android/i.test(u) ? "android" : null; }
+  function payHtml(){
+    var pf = payPlatform();
+    var btns = PAY_APPS.map(function(a){
+      if(pf) return '<a href="' + a[pf] + '" target="_blank" rel="noopener">פתח את ' + a.name + '</a>';
+      return '<a href="' + a.ios + '" target="_blank" rel="noopener">' + a.name + '<small>App Store</small></a>';
+    }).join("");
+    var extra = pf ? "" : '<div class="muted" style="margin-top:4px">באנדרואיד: ' + PAY_APPS.map(function(a){ return '<a href="' + a.android + '" target="_blank" rel="noopener">' + a.name + '</a>'; }).join(" · ") + '</div>';
+    return '<div class="sec"><div class="sec-h">תשלום על החנייה</div><div class="pay">' + btns + '</div>' + extra +
+      '<div class="muted" style="margin-top:6px">הכפתור פותח את דף האפליקציה בחנות, ומשם אפשר לפתוח אותה. האפליקציה הזו לא מפעילה חנייה ולא גובה כסף. את החנייה מפעילים באפליקציית התשלום, והיא קובעת את התעריף הסופי.</div></div>';
+  }
+
+  var DEFAULTS = { permit:"none", myZone:"", blue:{}, seg:null, dataVer:null };
+
+  /* =================== לוח שנה עברי =================== */
+  var hebFmt = null, hebFmtHe = null;
+  try {
+    hebFmt = new Intl.DateTimeFormat("en-u-ca-hebrew", { day:"numeric", month:"long" });
+    hebFmtHe = new Intl.DateTimeFormat("he-u-ca-hebrew", { day:"numeric", month:"long" });
+  } catch(e){}
+
+  function hebDate(d){
+    if(!hebFmt) return null;
+    var p = {}; hebFmt.formatToParts(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12)).forEach(function(x){ p[x.type] = x.value; });
+    return { day: parseInt(p.day, 10), month: p.month };
+  }
+  function hebDateText(d){ try { return hebFmtHe ? hebFmtHe.format(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12)) : ""; } catch(e){ return ""; } }
+
+  var HOLIDAYS = { "Tishri-1":"ראש השנה", "Tishri-2":"ראש השנה (יום שני)", "Tishri-10":"יום כיפור",
+                   "Tishri-15":"סוכות", "Tishri-22":"שמחת תורה", "Nisan-15":"פסח", "Nisan-21":"שביעי של פסח", "Sivan-6":"שבועות" };
+  var EVES = { "Elul-29":"ערב ראש השנה", "Tishri-9":"ערב יום כיפור", "Tishri-14":"ערב סוכות",
+               "Tishri-21":"הושענא רבה (ערב שמחת תורה)", "Nisan-14":"ערב פסח", "Nisan-20":"ערב שביעי של פסח", "Sivan-5":"ערב שבועות" };
+
+  function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+
+  // סוג היום: weekday | friday | saturday | eve | holiday | chol | zikaron | atzmaut
+  function dayInfo(d){
+    var dow = d.getDay(), h = hebDate(d), name = null, type = null;
+    if(h){
+      var key = h.month + "-" + h.day;
+      if(HOLIDAYS[key]){ type = "holiday"; name = HOLIDAYS[key]; }
+      else if(EVES[key]){ type = "eve"; name = EVES[key]; }
+      else if(h.month === "Tishri" && h.day >= 16 && h.day <= 20){ type = "chol"; name = "חול המועד סוכות"; }
+      else if(h.month === "Nisan" && h.day >= 16 && h.day <= 19){ type = "chol"; name = "חול המועד פסח"; }
+      else if(h.month === "Iyar" && h.day >= 2 && h.day <= 6){
+        // יום העצמאות: 5 באייר, מוקדם ליום חמישי אם חל בשישי/שבת, נדחה לשלישי אם חל בשני
+        var five = addDays(d, 5 - h.day), dw = five.getDay(), atz = 5;
+        if(dw === 5) atz = 4; else if(dw === 6) atz = 3; else if(dw === 1) atz = 6;
+        if(h.day === atz){ type = "atzmaut"; name = "יום העצמאות"; }
+        else if(h.day === atz - 1){ type = "zikaron"; name = "יום הזיכרון (ערב יום העצמאות)"; }
+      }
+    }
+    if(dow === 6 && type !== "holiday") return { type:"saturday", name: name ? "שבת, " + name : "שבת", verified:true };
+    if(type === "holiday") return { type:"holiday", name: dow === 6 ? "שבת, " + name : name, verified:true };
+    if(type === "eve") return { type:"eve", name:name, verified:true };
+    if(dow === 5) return { type:"friday", name: name ? "יום שישי, " + name : "יום שישי", verified:true };
+    if(type) return { type:type, name:name, verified:false };
+    return { type:"weekday", name:"יום חול", verified:true };
+  }
+
+  // שעות התשלום בכחול-לבן ביום נתון
+  function paySchedule(d, zone){
+    var info = dayInfo(d), center = CENTER_ZONES.indexOf(zone) >= 0;
+    var wkEnd = center ? "21:00" : "19:00";
+    if(!info.verified) return { info:info, unknown:true, start:null, end:null };   // אין מקור ודאי: לא מנחשים
+    switch(info.type){
+      case "saturday": case "holiday": return { info:info, start:null, end:null };
+      case "friday": case "eve":      return { info:info, start:"08:00", end:"17:00" };
+      default:                         return { info:info, start:"08:00", end:wkEnd };
+    }
+  }
+  // תחילת ימים שאין עליהם מידע ודאי
+  function unknownDayStarts(now){
+    var out = [];
+    for(var k=-1;k<=16;k++){ var d = addDays(now, k); if(!dayInfo(d).verified) out.push(d); }
+    return out;
+  }
+  function firstUnknownAfter(now){ var b = null; unknownDayStarts(now).forEach(function(d){ if(d > now && (!b || d < b)) b = d; }); return b; }
+
+  /* =================== זמן =================== */
+  var DAYS = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+  function atTime(d, hhmmStr){ var a = hhmmStr.split(":"); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), +a[0], +a[1]); }
+  function hhmm(d){ return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); }
+
+  function paidWindows(now, zone){
+    var out = [];
+    for(var k=-1;k<=16;k++){
+      var d = addDays(now, k), s = paySchedule(d, zone);
+      if(s.start) out.push([atTime(d, s.start), atTime(d, s.end)]);
+    }
+    return out;
+  }
+  function dailyWindows(now, start, end){
+    var out = [];
+    for(var k=-1;k<=16;k++){
+      var d = addDays(now, k), s = atTime(d, start), e = atTime(d, end);
+      if(e <= s) e = atTime(addDays(d, 1), end);
+      out.push([s, e]);
+    }
+    return out;
+  }
+  function activeEnd(ws, now){
+    var end = null, cur = now, guard = 0;
+    while(guard++ < 40){
+      var nx = null;
+      ws.forEach(function(w){ if(cur >= w[0] && cur < w[1] && (!nx || w[1] > nx)) nx = w[1]; });
+      if(!nx) break; end = nx; cur = nx;
+    }
+    return end;
+  }
+  function nextStart(ws, now){ var b = null; ws.forEach(function(w){ if(w[0] > now && (!b || w[0] < b)) b = w[0]; }); return b; }
+  function fmtAt(now, d){
+    if(d.toDateString() === now.toDateString()) return hhmm(d);
+    if(d.toDateString() === addDays(now, 1).toDateString()) return "מחר ב-" + hhmm(d);
+    return "יום " + DAYS[d.getDay()] + " ב-" + hhmm(d);
+  }
+  function fmtLeft(ms){
+    var m = Math.max(0, Math.round(ms/60000)), h = Math.floor(m/60); m = m % 60;
+    if(h >= 24){ var dd = Math.floor(h/24); return dd === 1 ? "יותר מיום" : "בעוד " + dd + " ימים"; }
+    if(h && m) return "בעוד " + h + " ש׳ ו-" + m + " דק׳";
+    if(h) return "בעוד " + h + " ש׳";
+    return "בעוד " + m + " דק׳";
+  }
+  function fmtDate(d){ return d.getDate() + "." + (d.getMonth()+1); }
+
+
+
+  /* =================== שמירה =================== */
+  var KEY = "parking-now-v2";
+  function load(){
+    var c = Object.assign({}, DEFAULTS);
+    try { var raw = localStorage.getItem(KEY); if(raw) c = Object.assign(c, JSON.parse(raw)); } catch(e){}
+    c.blue = c.blue || {};
+    // מעבר מגרסה 3: ההגדרה של הושע (קוד רחוב 221)
+    if(c.blueType && !c.blue["221"]){ c.blue["221"] = { type:c.blueType, start:c.prefStart || "", end:c.prefEnd || "" }; }
+    delete c.blueType; delete c.prefStart; delete c.prefEnd; delete c.calib;
+    if(!D || c.dataVer !== D.checked) c.seg = null;
+    return c;
+  }
+  function save(){
+    if(D) cfg.dataVer = D.checked;
+    try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e){}
+    var tag = el("savedTag"); tag.classList.add("show"); clearTimeout(save._t); save._t = setTimeout(function(){ tag.classList.remove("show"); }, 1200);
+  }
+  var cfg = load();
+  var state = { pos:null, accuracy:null, gpsSeg:null, geoError:null, curb:null, when:null, pickStreet:null };
+
+  /* =================== גאומטריה =================== */
+  function toXY(q, k){ return [q[1]*111320*k, q[0]*110540]; }
+  function distToSeg(p, a, b){
+    var k = Math.cos(p[0]*Math.PI/180), P = toXY(p,k), A = toXY(a,k), B = toXY(b,k);
+    var dx = B[0]-A[0], dy = B[1]-A[1], len2 = dx*dx+dy*dy || 1;
+    var t = Math.max(0, Math.min(1, ((P[0]-A[0])*dx + (P[1]-A[1])*dy) / len2));
+    return Math.hypot(A[0]+t*dx-P[0], A[1]+t*dy-P[1]);
+  }
+  function distPt(p, a){ return distToSeg(p, a, a); }
+  function distLine(p, flat){
+    var d = Infinity;
+    if(flat.length < 4) return distPt(p, [flat[0], flat[1]]);
+    for(var i=0;i+3<flat.length;i+=2) d = Math.min(d, distToSeg(p, [flat[i],flat[i+1]], [flat[i+2],flat[i+3]]));
+    return d;
+  }
+  function segMid(s){ var n = s.p.length/2, i = Math.floor((n-1)/2)*2, j = Math.ceil((n-1)/2)*2; return [(s.p[i]+s.p[j])/2, (s.p[i+1]+s.p[j+1])/2]; }
+
+  /* =================== רחובות וקטעים =================== */
+  var BY_STREET = {}, STREET_LIST = [];
+  if(D){
+    D.segs.forEach(function(s, i){ (BY_STREET[s.k] = BY_STREET[s.k] || []).push(i); });
+    Object.keys(BY_STREET).forEach(function(k){ STREET_LIST.push({ k:k, name:D.names[k] || "" }); });
+  }
+  function crossName(jIdx, streetName){
+    if(jIdx < 0) return null;
+    var parts = D.junctions[jIdx][2].split("-").map(function(x){ return x.trim(); }).filter(Boolean);
+    var other = parts.filter(function(x){ return x !== streetName && streetName.indexOf(x) < 0 && x.indexOf(streetName) < 0; });
+    other = other.filter(function(x){ return !/^\d+$/.test(x); });
+    return other.length ? other.join(" / ") : "רחוב ללא שם";
+  }
+  function segLabel(i){
+    var s = D.segs[i], nm = D.names[s.k] || "";
+    var a = crossName(s.e[0], nm), b = crossName(s.e[1], nm);
+    if(a && b) return "בין " + a + " ל" + b;
+    if(a || b) return "ליד " + (a || b);
+    return "קטע של " + s.len + " מ׳";
+  }
+  function current(){
+    var i = (cfg.seg !== null && cfg.seg !== undefined) ? cfg.seg : state.gpsSeg;
+    if(i === null || i === undefined || !D || !D.segs[i]) return null;
+    var s = D.segs[i];
+    return { i:i, s:s, k:String(s.k), name:D.names[s.k] || "", zone:s.z, tow:s.tz, manual: cfg.seg !== null && cfg.seg !== undefined };
+  }
+  function locateGPS(){
+    state.gpsSeg = null;
+    if(!D || !state.pos) return;
+    var best = null, bestD = Infinity, p = state.pos;
+    for(var i=0;i<D.segs.length;i++){
+      var s = D.segs[i];
+      if(Math.abs(s.p[0]-p[0]) > 0.01 || Math.abs(s.p[1]-p[1]) > 0.01) continue;   // סינון מהיר (~1 ק"מ)
+      var d = distLine(p, s.p);
+      if(d < bestD){ bestD = d; best = i; }
+    }
+    if(best !== null && bestD <= 25 + Math.min(state.accuracy || 0, 40)) state.gpsSeg = best;
+  }
+
+  /* =================== מנוע הכללים =================== */
+  function profile(zone){
+    var hasPermit = cfg.permit === "tlv";
+    return { hasPermit:hasPermit, ownZone: hasPermit && !!zone && cfg.myZone === zone };
+  }
+  function blueCfg(k){ return cfg.blue[k] || { type:"unknown", start:"", end:"" }; }
+  function prefWindowsFor(now, bc){
+    if(bc.type !== "preferred") return null;
+    if(!bc.start || !bc.end) return "all";
+    return dailyWindows(now, bc.start, bc.end);
+  }
+  function isCenter(zone){ return CENTER_ZONES.indexOf(zone) >= 0; }
+
+  // מצב הכחול-לבן בקטע הנוכחי, עבור המשתמש. כשאין מידע ודאי: רמה unk, בלי תשובה.
+  function blueStatus(now, cur){
+    var zone = cur.zone, pr = profile(zone), info = dayInfo(now), bc = blueCfg(cur.k);
+
+    if(!zone) return { level:"unk", badge:"אין מידע ודאי", main:"הקטע לא נמצא באזור חנייה", title:"אין לי מידע ודאי",
+      sub:"לפי מפת העירייה הקטע הזה לא נמצא באף אחד מ-9 אזורי החנייה, ולכן אני לא יודע מה הכללים בכחול-לבן כאן. בדוק בתמרור." };
+
+    if(pr.ownZone) return { level:"ok", badge:"חינם עבורך", main:"חינם עבורך", title:"מותר לחנות, חינם",
+      sub:"יש לך תו של אזור " + zone + ", ואתה חונה באזור שלך. חינם בכל שעות היממה." };
+
+    if(!info.verified) return { level:"unk", badge:"אין מידע ודאי", main:"אין לי מידע ודאי להיום", title:"אין לי מידע ודאי",
+      sub:"היום " + info.name + ". לא מצאתי מקור רשמי שאומר אם משלמים בכחול-לבן ביום כזה, ולכן אני לא נותן תשובה. בדוק בתמרור או באפליקציית החנייה." };
+
+    if(bc.type === "unknown"){
+      var endU = activeEnd(paidWindows(now, zone), now);
+      return { level:"unk", badge:"אין מידע ודאי", main:"לא ידוע אם מותר לך לחנות כאן", title:"אין לי מידע ודאי",
+        sub:"לא ידוע אם הכחול-לבן ברחוב הזה פתוח לכולם או רק לבעלי תו אזור " + zone + ". בדוק בתמרור: אם כתוב \"לבעלי תו אזור " + zone + " בלבד\", אסור לך לחנות כאן. " +
+            (endU ? "אם הוא פתוח לכולם: עכשיו בתשלום עד " + hhmm(endU) + "." : "אם הוא פתוח לכולם: עכשיו אין תשלום.") + " אחרי שבדקת, סמן בהגדרות." };
+    }
+
+    var pw = prefWindowsFor(now, bc);
+    if(pw === "all") return { level:"no", badge:"לבעלי תו בלבד", main:"רק לבעלי תו אזור " + zone, title:"אסור לחנות בלי תו אזור " + zone,
+      sub:"לפי מה שסימנת, הכחול-לבן ברחוב הזה מיועד רק לבעלי תו של אזור " + zone + "." };
+    if(pw){
+      var pe = activeEnd(pw, now);
+      if(pe) return { level:"no", badge:"לבעלי תו בלבד", main:"עכשיו רק לבעלי תו אזור " + zone, title:"עכשיו רק לבעלי תו אזור " + zone,
+        sub:"לפי התמרור, בשעות האלה החנייה מותרת רק לבעלי תו של אזור " + zone + ".", change:pe, changeText:"נגמרות שעות התו" };
+    }
+    var prefNext = (pw && pw !== "all") ? nextStart(pw, now) : null;
+
+    var ws = paidWindows(now, zone), pEnd = activeEnd(ws, now), unkNext = firstUnknownAfter(now), center = isCenter(zone);
+    if(pEnd){
+      var ch = pEnd, chText = "נגמרות שעות התשלום";
+      if(prefNext && prefNext < pEnd){ ch = prefNext; chText = "מתחילות שעות לבעלי תו בלבד"; }
+      if(pr.hasPermit) return { level:"cond", badge:"בתשלום, עם הטבת תושב", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
+        sub: cfg.myZone
+          ? "התו שלך מאזור " + cfg.myZone + ". מחוץ לאזור שלך: שעתיים ראשונות ביממה חינם (במצטבר), אחר כך " + (center ? RATE_RESIDENT_CENTER + " ₪ לשעה" : "30% הנחה מהתעריף (התעריף באזור הזה: אין לי מידע ודאי)") + ". חובה להפעיל אפליקציית חנייה מהדקה הראשונה."
+          : "אם התו שלך של אזור " + zone + ", החנייה חינם. אם לא: שעתיים חינם ביממה דרך אפליקציית חנייה, ואחר כך " + (center ? RATE_RESIDENT_CENTER + " ₪ לשעה" : "30% הנחה מהתעריף") + ". בחר את אזור התו בהגדרות.",
+        change:ch, changeText:chText };
+      return { level:"cond", badge:"בתשלום", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
+        sub: center ? "תעריף מבקר: " + RATE_VISITOR_CENTER + " ₪ לשעה. משלמים דרך אפליקציית חנייה." : "התעריף באזור " + zone + ": אין לי מידע ודאי. משלמים דרך אפליקציית חנייה, והיא מציגה את התעריף.",
+        change:ch, changeText:chText };
+    }
+    var nx = nextStart(ws, now), nxText = "מתחיל תשלום";
+    if(prefNext && (!nx || prefNext < nx)){ nx = prefNext; nxText = "מתחילות שעות לבעלי תו בלבד"; }
+    if(unkNext && (!nx || unkNext < nx)){ nx = unkNext; nxText = "מתחיל יום שאין לי עליו מידע ודאי"; }
+    return { level:"ok", badge:"חינם עכשיו", main:"חינם עכשיו", title:"מותר לחנות, חינם",
+      sub: (info.type === "holiday" ? "היום " + info.name + ": אין שעות תשלום." : info.type === "saturday" ? "בשבת אין שעות תשלום." : "עכשיו מחוץ לשעות התשלום."),
+      change:nx, changeText:nxText };
+  }
+
+  /* =================== מה יש בקטע (ממפת העירייה) =================== */
+  function hrs(a, b){ return a && b ? a + "–" + b : null; }
+  function segFacts(cur){
+    var s = cur.s, out = [], nm = cur.name;
+    // צמתים בקצוות
+    s.e.forEach(function(j){
+      if(j < 0) return;
+      var J = D.junctions[j];
+      out.push({ ic:"✖️", t:"צומת עם " + crossName(j, nm) + (J[3] ? " (עם רמזור)" : "") + ". אסור לחנות בצומת ופחות מ-12 מ׳ ממנו." });
+    });
+    (s.bs || []).forEach(function(i){ out.push({ ic:"🚌", t:"תחנת אוטובוס \"" + D.stops[i][2] + "\". אסור לחנות פחות מ-20 מ׳ לפניה או אחריה, בשני צדי הכביש." }); });
+    (s.ln || []).forEach(function(i){ var L = D.lines[i]; out.push({ ic:"🟥", t:"סימון על הכביש: " + (L[0] === 818 ? "אבני שפה אדום-לבן, אסורה כל עצירה או חנייה" : L[0] === 820 ? "שטח מסומן בלבן שאסור לחנות בו" : "אבני שפה שחור-לבן (הדגשה בלבד, לא איסור)") + (L[1] ? ", באורך כ-" + L[1] + " מ׳." : ".") }); });
+    (s.ls || []).forEach(function(i){ var S = D.signs[i]; out.push({ ic:"🚚", t:"תמרור " + S[3] + ". כתוב עליו: ", q:S[2], tail:(S[4] ? " (עודכן במאגר העירייה " + S[4] + ")" : "") }); });
+    (s.tx || []).forEach(function(i){ var T = D.taxi[i]; out.push({ ic:"🚕", t:"תחנת מוניות" + (T[2] ? " \"" + T[2] + "\"" : "") + (T[3] ? ", " + T[3] : "") + (T[4] ? ", " + T[4] + " מקומות" : "") + ". המקומות שמורים למוניות לפי התמרור." }); });
+    (s.at || []).forEach(function(i){ var A = D.autotel[i]; out.push({ ic:"🚗", t:"חניית אוטותל" + (A[2] ? " ב" + A[2] : "") + (A[3] ? ", " + A[3] + " מקומות" : "") + ". המקומות שמורים לרכבי אוטותל." }); });
+    (s.mo || []).forEach(function(i){ var M = D.moto[i]; out.push({ ic:"🏍️", t:"חניית אופנועים" + (M[2] ? " ב" + M[2] : "") + (M[3] ? ", " + M[3] + " מקומות" : "") + "." }); });
+    (s.mc || []).forEach(function(i){ var M = D.micro[i]; out.push({ ic:"🛴", t:"תא חנייה לכלים זעירים" + (M[2] ? " ב" + M[2] : "") + (M[3] ? " (" + M[3] + ")" : "") + "." }); });
+    (s.bl || []).forEach(function(i){
+      var B = D.buslanes[i], h = [];
+      if(hrs(B[4],B[5])) h.push("א׳–ה׳ " + hrs(B[4],B[5]));
+      if(hrs(B[6],B[7])) h.push("שישי וערבי חג " + hrs(B[6],B[7]));
+      if(hrs(B[8],B[9])) h.push("שבת וחג " + hrs(B[8],B[9]));
+      out.push({ ic:"🟨", t:"נתיב תחבורה ציבורית" + (B[1] ? " (" + B[1] + ")" : "") + (B[2] && B[3] ? " מ" + B[2] + " עד " + B[3] : "") + ". " +
+        (h.length ? "שעות פעילות לפי המפה: " + h.join(", ") + "." : "שעות הפעילות לא רשומות במפה, בדוק בתמרור.") + (B[10] && B[10] !== "פעיל" ? " סטטוס: " + B[10] + "." : "") });
+    });
+    (s.pd || []).forEach(function(i){ var P = D.ped[i]; out.push({ ic:"🚶", t:"רחוב מוטה הולכי רגל" + (P[3] ? " (" + P[3] + ")" : "") + ": " + (P[1] || "") + (P[2] ? ". " + P[2] : "") + "." }); });
+    (s.wk || []).forEach(function(i){ var W = D.works[i]; out.push({ ic:"🚧", t:"עבודות" + (W[0] ? " ב" + W[0] : "") + (W[1] ? ": " + W[1] : "") + (W[2] ? ", " + W[2] : "") + (W[6] || W[7] ? ". תאריכים: " + (W[6] || "?") + " עד " + (W[7] || "?") : "") + (W[4] && W[5] ? ", " + W[4] + "–" + W[5] : "") + ". (נכון ל-" + D.checked + ")" }); });
+    var pvBy = {}, pvOrder = [];
+    (s.pv || []).forEach(function(i){ var P = D.private[i]; if(!pvBy[P[2]]){ pvBy[P[2]] = 0; pvOrder.push(P[2]); } pvBy[P[2]] += (+P[3] || 0); });
+    if(pvOrder.length) out.push({ ic:"🏠", t:"חניונים פרטיים רשומים ב: " + pvOrder.map(function(a){ return a + (pvBy[a] ? " (" + pvBy[a] + " רכבים)" : ""); }).join(", ") + ". אסור לחנות מול כניסה לחנייה. איפה בדיוק הכניסות, אין לי מידע ודאי." });
+    if(cur.tow){
+      var T = (D.tow || []).filter(function(t){ return t[0] === cur.tow; })[0];
+      if(T) out.push({ ic:"🏗️", t:"אם הרכב נגרר: לפי מפת העירייה הקטע באזור גרירה " + T[0] + ", והחניון של האזור הוא " + T[1] + ", " + T[2] + "." });
+    }
+    return out;
+  }
+
+  // חניונים קרובים
+  function nearbyLots(center){
+    var out = [], seen = {};
+    (D.nightLots || []).forEach(function(L){
+      var d = distPt(center, [L[0], L[1]]); if(d > 700) return;
+      seen[L[2]] = true;
+      out.push({ d:d, at:[L[0], L[1]], name:L[2], addr:L[3], type:L[4], rate:L[5], note:L[6] });
+    });
+    (D.ahuzot || []).forEach(function(L){
+      var d = distPt(center, [L[0], L[1]]); if(d > 700) return;
+      var dup = out.filter(function(o){ return o.name === L[2] || distPt([L[0], L[1]], o.at) < 60; })[0];
+      if(dup){ if(!dup.rate) dup.rate = L[4]; return; }
+      seen[L[2]] = true;
+      out.push({ d:d, at:[L[0], L[1]], name:"אחוזות החוף – " + L[2], addr:L[3], type:"", rate:L[4], note:L[6] });
+    });
+    (D.publicLots || []).forEach(function(L){
+      var d = distPt(center, [L[0], L[1]]); if(d > 400 || !L[2] || L[2] === "חניון") return;
+      if(out.some(function(o){ return o.at && distPt([L[0], L[1]], o.at) < 60; })) return;
+      out.push({ d:d, at:[L[0], L[1]], name:L[2], addr:"", type:"חניון ציבורי ברישיון עירוני", rate:"", note:"" });
+    });
+    out.sort(function(a, b){ return a.d - b.d; });
+    return out.slice(0, 5);
+  }
+
+  // אזהרות לפי מיקום GPS מדויק
+  function nearWarnings(){
+    var out = [];
+    if(!D || !state.pos || current() === null || current().manual) return out;
+    var p = state.pos, acc = Math.min(state.accuracy || 0, 20);
+    function near(arr, maxd, fn){ (arr || []).forEach(function(x){ if(Math.abs(x[0]-p[0]) > 0.002 || Math.abs(x[1]-p[1]) > 0.002) return; var d = distPt(p, [x[0], x[1]]); if(d <= maxd + acc) fn(x, d); }); }
+    near(D.junctions, 12, function(J, d){ out.push("ייתכן שאתה פחות מ-12 מ׳ מהצומת " + J[2] + " (כ-" + Math.round(d) + " מ׳ ממרכז הצומת במפה). שם אסור לחנות."); });
+    near(D.stops, 20, function(S, d){ out.push("ייתכן שאתה פחות מ-20 מ׳ מתחנת האוטובוס \"" + S[2] + "\" (כ-" + Math.round(d) + " מ׳). שם אסור לחנות."); });
+    near(D.taxi, 15, function(T){ out.push("אתה ליד תחנת מוניות" + (T[2] ? " \"" + T[2] + "\"" : "") + ". המקומות שם שמורים למוניות."); });
+    near(D.autotel, 10, function(A){ out.push("אתה ליד חניית אוטותל" + (A[2] ? " ב" + A[2] : "") + ". המקומות שם שמורים לאוטותל."); });
+    near(D.signs, 15, function(S){ out.push("אתה ליד תמרור " + S[3] + ": \"" + S[2] + "\""); });
+    near(D.private, 15, function(P){ out.push("אתה ליד " + P[2] + ", ושם רשום חניון פרטי. אם יש מולך כניסה לחנייה, אסור לחנות בה."); });
+    (D.lines || []).forEach(function(L){ if(L[0] !== 818 && L[0] !== 820) return; var d = distLine(p, L.slice(2)); if(d <= 8 + acc) out.push("ייתכן שאתה ליד " + (L[0] === 818 ? "אבני שפה אדום-לבן" : "שטח מסומן בלבן שאסור לחנות בו") + " לפי מפת העירייה."); });
+    return out;
+  }
+
+  function evaluate(now, curb){
+    var cur = current();
+    if(curb === "redwhite") return { level:"no", badge:"אסור", title:"אסור לחנות כאן", sub:"אבן שפה אדום-לבן: אסור לעצור ואסור לחנות, בכל שעות היממה." };
+    if(curb === "redyellow") return { level:"no", badge:"אסור לרכב פרטי", title:"אסור לעצור כאן", sub:"אבן שפה אדום-צהוב: אסור לעצור. מותר רק לסוג הרכב שמופיע בתמרור (למשל אוטובוס), ורק להעלאה והורדה של נוסעים." };
+    if(curb === "none") return { level:"ok", badge:"אין איסור מהסימון", title:"הסימון לא אוסר לחנות", sub:"אבן שפה לא צבועה לא אוסרת חנייה. אם יש תמרור במקום, הוא קובע. בדוק גם שאתה לא באחד המקומות האסורים (ברשימה למעלה).", warn:nearWarnings() };
+    if(!cur){
+      var s = paySchedule(now, "9"), s2 = paySchedule(now, "1");
+      return { level:"unk", badge:"אין מידע ודאי", title:"אין לי מידע ודאי על המקום הזה",
+        sub:"עוד לא בחרת רחוב, אז אני לא יודע את האזור ואת סוג החנייה. בחר רחוב למעלה, או בדוק בתמרור." +
+            (s.unknown ? "" : s.start ? " לידיעתך, היום בתל אביב: באזורי מרכז העיר (6, 7, 9, 10) תשלום " + s.start + "–" + s.end + ", ובשאר האזורים " + s2.start + "–" + s2.end + "." : " לידיעתך, היום אין שעות תשלום בכחול-לבן בתל אביב.") };
+    }
+    var res = blueStatus(now, cur);
+    res.warn = (res.warn || []).concat(nearWarnings());
+    return res;
+  }
+
+  /* =================== תצוגה =================== */
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  var DENY = [
+    "אדום-לבן: אסור לעצור ולחנות.",
+    "אדום-צהוב: אסור לעצור, חוץ מהרכב שבתמרור.",
+    "בתוך צומת או פחות מ-12 מטר ממנו.",
+    "בתוך מעבר חצייה או פחות מ-12 מטר לפניו.",
+    "פחות מ-12 מטר לפני קו עצירה.",
+    "פחות מ-20 מטר לפני תחנת אוטובוס או אחריה, בשני צדי הכביש.",
+    "על המדרכה, אלא אם יש סימון שמתיר.",
+    "בכניסה לחנייה או לחניון.",
+    "בצד שמאל של הכביש, אלא אם הרחוב חד-סטרי."
+  ];
+
+  function upcomingSpecial(now){
+    var out = [];
+    for(var k=0;k<=60 && out.length<4;k++){
+      var d = addDays(now, k), info = dayInfo(d);
+      if(info.type === "weekday" || info.type === "friday" || (info.type === "saturday" && info.name === "שבת")) continue;
+      var eff = info.type === "holiday" ? "אין תשלום"
+              : info.type === "eve" ? "תשלום 08:00–17:00, כמו ביום שישי"
+              : info.type === "saturday" ? "אין תשלום"
+              : "אין לי מידע ודאי על תשלום ביום הזה. בדוק בתמרור";
+      out.push({ d:d, k:k, name:info.name, eff:eff });
+    }
+    return out;
+  }
+
+
+
+  function renderWhere(){
+    var g;
+    if(!D) g = "קובץ הנתונים לא נטען, ולכן אי אפשר לזהות רחובות.";
+    else if(state.pos && state.gpsSeg !== null) g = "📡 לפי ה-GPS אתה ב" + D.names[D.segs[state.gpsSeg].k] + ", " + segLabel(state.gpsSeg) + " (דיוק ±" + Math.round(state.accuracy || 0) + " מ׳).";
+    else if(state.pos) g = "📡 יש מיקום GPS, אבל הוא לא ליד אף רחוב במפה של תל אביב-יפו.";
+    else if(state.geoError) g = state.geoError;
+    else g = "מחכה למיקום…";
+    var cur = current();
+    var extra = cur && cur.manual ? '<div class="loc-line"><b>בחרת: ' + esc(cur.name) + ", " + esc(segLabel(cur.i)) + '</b> <button class="btn small" id="clearSeg">' + (state.pos ? "חזרה ל-GPS" : "ניקוי") + "</button></div>" : "";
+    el("gpsLine").innerHTML = esc(g) + extra;
+    var cb = el("clearSeg"); if(cb) cb.onclick = function(){ cfg.seg = null; save(); state.pickStreet = null; renderAll(); };
+
+    // תוצאות חיפוש
+    var q = el("streetInput").value.trim(), box = el("streetResults"), sbox = el("segResults");
+    box.innerHTML = ""; sbox.innerHTML = "";
+    if(!D) return;
+    if(state.pickStreet){
+      var ids = BY_STREET[state.pickStreet].slice(), nm = D.names[state.pickStreet];
+      var mids = ids.map(function(i){ return segMid(D.segs[i]); });
+      var latR = Math.max.apply(null, mids.map(function(m){ return m[0]; })) - Math.min.apply(null, mids.map(function(m){ return m[0]; }));
+      var lonR = Math.max.apply(null, mids.map(function(m){ return m[1]; })) - Math.min.apply(null, mids.map(function(m){ return m[1]; }));
+      var ax = latR >= lonR * 0.85 ? 0 : 1;
+      ids.sort(function(a, b){ return segMid(D.segs[a])[ax] - segMid(D.segs[b])[ax]; });
+      sbox.innerHTML = '<div class="muted">' + esc(nm) + ': באיזה קטע אתה? (' + ids.length + ')</div>' +
+        ids.map(function(i){ var s = D.segs[i]; return '<button data-seg="' + i + '"' + (cfg.seg === i ? ' class="cur"' : '') + '>' + esc(segLabel(i)) + '<span class="r-sub">אזור חנייה ' + esc(s.z || "לא ידוע") + " · " + s.len + " מ׳</span></button>"; }).join("");
+      Array.prototype.forEach.call(sbox.querySelectorAll("button[data-seg]"), function(b){
+        b.onclick = function(){ cfg.seg = +b.getAttribute("data-seg"); save(); state.pickStreet = null; el("streetInput").value = ""; renderAll(); el("place").scrollIntoView({ behavior:"smooth", block:"start" }); };
+      });
+      return;
+    }
+    if(q.length < 2) return;
+    var hits = STREET_LIST.filter(function(s){ return s.name.indexOf(q) >= 0; });
+    hits.sort(function(a, b){ return (a.name.indexOf(q) === 0 ? 0 : 1) - (b.name.indexOf(q) === 0 ? 0 : 1) || a.name.length - b.name.length; });
+    if(!hits.length){ box.innerHTML = '<div class="muted">לא מצאתי רחוב בשם הזה במפת העירייה.</div>'; return; }
+    box.innerHTML = hits.slice(0, 8).map(function(s){ return '<button data-k="' + esc(s.k) + '">' + esc(s.name) + '<span class="r-sub">' + BY_STREET[s.k].length + " קטעים</span></button>"; }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll("button[data-k]"), function(b){
+      b.onclick = function(){
+        var k = b.getAttribute("data-k");
+        if(BY_STREET[k].length === 1){ cfg.seg = BY_STREET[k][0]; save(); el("streetInput").value = ""; state.pickStreet = null; renderAll(); return; }
+        state.pickStreet = k; renderWhere();
+      };
+    });
+  }
+
+  function renderPlace(){
+    var box = el("place"), now = state.when || new Date(), html = "", cur = current();
+    var info = dayInfo(now), hd = hebDateText(now);
+
+    var title, sub;
+    if(cur){ title = "רחוב " + cur.name + (cur.zone ? " · אזור חנייה " + cur.zone : " · מחוץ לאזורי החנייה"); sub = segLabel(cur.i) + " · " + cur.s.len + " מ׳" + (cur.manual ? " · נבחר ידנית" : " · לפי GPS"); }
+    else { title = "עוד לא נבחר רחוב"; sub = "בחר רחוב למעלה כדי לראות מה מותר ומה אסור בו."; }
+    html += '<div class="place-head"><div class="pin">📍</div><div><div class="place-title">' + esc(title) + '</div><div class="muted">' + esc(sub) + '</div></div></div>';
+
+    var special = info.type !== "weekday";
+    var sched = cur && cur.zone ? paySchedule(now, cur.zone) : null;
+    html += '<div class="day-strip' + (special ? ' special' : '') + '"><b>היום: ' + esc(info.name) + '</b>' + (hd ? ' <span class="muted">· ' + esc(hd) + '</span>' : '') +
+            '<div class="muted">' + (sched
+              ? (sched.unknown ? "שעות התשלום היום: אין לי מידע ודאי. בדוק בתמרור." : sched.start ? "שעות תשלום בכחול-לבן: " + sched.start + "–" + sched.end : "אין היום שעות תשלום בכחול-לבן")
+              : "") + '</div></div>';
+
+    if(cur){
+      var st = blueStatus(now, cur);
+      var chLine = st.change ? esc(st.changeText) + ": " + esc(fmtAt(now, st.change)) + " (" + esc(fmtLeft(st.change - now)) + ")" : "";
+      html += '<div class="status ' + st.level + '"><div class="s-label">כחול-לבן ברחוב הזה, עבורך, עכשיו</div><div class="s-main">' + esc(st.main) + '</div>' +
+              (chLine ? '<div class="s-sub">' + chLine + '</div>' : '') + '</div>';
+      (st.warn || []).concat(nearWarnings()).filter(Boolean).forEach(function(w){ html += '<div class="warn">⚠️ ' + esc(w) + '</div>'; });
+
+      if(cur.zone){
+        var pr = profile(cur.zone), z = cur.zone, center = isCenter(z);
+        var meOwn = pr.ownZone, meOther = pr.hasPermit && !pr.ownZone, meVisitor = !pr.hasPermit;
+        html += '<div class="sec"><div class="sec-h">מי משלם כאן ' + (cfg.permit === "none" && !cfg.myZone ? "" : "(השורה שלך מודגשת)") + '</div>' +
+          '<div class="who' + (meOwn ? ' me' : '') + '"><span>בעלי תו אזור ' + esc(z) + '</span><b>חינם, כל היום</b></div>' +
+          '<div class="who' + (meOther ? ' me' : '') + '"><span>תו תל אביב מאזור אחר</span><b>שעתיים חינם, אחר כך ' + (center ? RATE_RESIDENT_CENTER + ' ₪' : '30% הנחה') + '</b></div>' +
+          '<div class="who' + (meVisitor ? ' me' : '') + '"><span>מבקר בלי תו</span><b>' + (center ? RATE_VISITOR_CENTER + ' ₪ לשעה' : 'אין לי מידע ודאי על התעריף') + '</b></div></div>';
+      }
+
+      if(cur.zone) html += payHtml();
+
+      var facts = segFacts(cur);
+      html += '<div class="sec"><div class="sec-h">בקטע הזה, לפי מפת העירייה (' + esc(D.checked) + ')</div>' +
+        (facts.length ? '<ul class="facts">' + facts.map(function(f){ return '<li><span class="ic">' + f.ic + '</span><span>' + esc(f.t) + (f.q ? '<q>' + esc(f.q) + '</q>' : '') + esc(f.tail || "") + '</span></li>'; }).join("") + '</ul>'
+                     : '<div class="muted">אין במפת העירייה פרטים נוספים על הקטע הזה.</div>') +
+        '<div class="muted" style="margin-top:6px">במפה אין את תמרורי החנייה הרגילים ואת צבעי אבני השפה. אותם צריך לבדוק בשטח.</div></div>';
+
+      var lots = nearbyLots(state.pos && !cur.manual ? state.pos : segMid(cur.s));
+      if(lots.length){
+        html += '<div class="sec"><div class="sec-h">חניונים קרובים</div><ul class="facts">' + lots.map(function(L){
+          return '<li><span class="ic">🅿️</span><span><b>' + esc(L.name) + '</b>' + (L.addr ? ", " + esc(L.addr) : "") + ' <span class="muted">(כ-' + Math.round(L.d / 10) * 10 + ' מ׳)</span>' +
+            (L.type ? '<br><span class="muted">' + esc(L.type) + '</span>' : '') + (L.rate ? '<br>' + esc(L.rate) : '') + (L.note ? '<br><span class="muted">' + esc(L.note) + '</span>' : '') + '</span></li>';
+        }).join("") + '</ul><div class="muted" style="margin-top:6px">מצב התפוסה לא מוצג, כי האפליקציה עובדת עם עותק של הנתונים ולא עם נתונים חיים.</div></div>';
+      }
+    }
+
+    html += '<div class="sec"><div class="lists">' +
+      '<div class="list allow"><h3>✅ מותר</h3><ul>' +
+        '<li>כחול-לבן: מחוץ לשעות התשלום, חינם' + (cur ? '' : ' (לפי התמרור)') + '.</li>' +
+        '<li>כחול-לבן בשעות התשלום: בתשלום דרך אפליקציה, או חינם עם תו של האזור.</li>' +
+        '<li>אבן שפה לא צבועה: הסימון לא אוסר. אם יש תמרור, הוא קובע.</li>' +
+        '<li>בשבת ובחג: אין תשלום בכחול-לבן.</li></ul></div>' +
+      '<div class="list deny"><h3>⛔ אסור</h3><ul>' + DENY.map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + '</ul></div>' +
+      '</div></div>';
+
+    var up = upcomingSpecial(now);
+    if(up.length){
+      html += '<div class="sec"><div class="sec-h">חגים ומועדים קרובים</div><div class="upcoming">' +
+        up.map(function(u){
+          var when = u.k === 0 ? "היום" : u.k === 1 ? "מחר" : "יום " + DAYS[u.d.getDay()] + " " + fmtDate(u.d);
+          return '<div class="u-row"><span><b>' + esc(u.name) + '</b><br><span class="muted">' + esc(u.eff) + '</span></span><span class="u-when">' + esc(when) + '</span></div>';
+        }).join("") + '</div></div>';
+    }
+
+    html += '<div class="stamp">הכללים נבדקו לאחרונה: ' + RULES_CHECKED + '. נתוני המפה: עותק מ-' + esc(D ? D.checked : "?") + '. העירייה מכריזה לפעמים על חנייה חינם (בחירות, מצב חירום), והאפליקציה לא יודעת על זה.</div>';
+    box.innerHTML = html;
+  }
+
+  function renderVerdict(){
+    var box = el("verdict");
+    if(!state.curb){ box.className = "verdict idle"; box.innerHTML = ""; return; }
+    var now = state.when || new Date(), r = evaluate(now, state.curb);
+    var html = '<span class="v-badge">' + esc(r.badge) + '</span><p class="v-title">' + esc(r.title) + '</p><p class="v-sub">' + esc(r.sub) + '</p>';
+    (r.warn || []).filter(Boolean).forEach(function(w){ html += '<div class="v-warn">⚠️ ' + esc(w) + '</div>'; });
+    if(r.change) html += '<div class="v-change">' + esc(r.changeText) + ": " + esc(fmtAt(now, r.change)) + ' <small>(' + esc(fmtLeft(r.change - now)) + ')</small></div>';
+    box.className = "verdict " + r.level; box.innerHTML = html;
+  }
+
+  function renderWhen(){
+    el("whenNote").textContent = state.when ? "מציג את המצב ליום " + DAYS[state.when.getDay()] + " " + fmtDate(state.when) + " ב-" + hhmm(state.when) + "." : "מציג את המצב לשעה הנוכחית.";
+  }
+  function renderSettings(){
+    el("permit").value = cfg.permit; el("myZone").value = cfg.myZone;
+    el("myZoneField").style.display = cfg.permit === "tlv" ? "" : "none";
+    var cur = current();
+    el("blueTitle").textContent = cur ? "מה כתוב על התמרור ברחוב " + cur.name : "מה כתוב על התמרור ברחוב";
+    el("blueNoStreet").style.display = cur ? "none" : "";
+    el("blueFields").style.display = cur ? "" : "none";
+    if(cur){
+      var bc = blueCfg(cur.k);
+      el("blueType").value = bc.type; el("prefStart").value = bc.start || ""; el("prefEnd").value = bc.end || "";
+      el("prefOpt").textContent = "חנייה לבעלי תו אזור " + (cur.zone || "?") + " בלבד (מועדפת)";
+      el("prefHours").style.display = bc.type === "preferred" ? "" : "none";
+    }
+  }
+  function renderAll(){ renderWhere(); renderPlace(); renderVerdict(); renderWhen(); renderSettings(); }
+
+  /* =================== אירועים =================== */
+  ["permit","myZone"].forEach(function(f){ el(f).addEventListener("change", function(){ cfg[f] = el(f).value; save(); renderAll(); }); });
+  ["blueType","prefStart","prefEnd"].forEach(function(f){
+    ["input","change"].forEach(function(ev){ el(f).addEventListener(ev, function(){
+      var cur = current(); if(!cur) return;
+      cfg.blue[cur.k] = { type:el("blueType").value, start:el("prefStart").value, end:el("prefEnd").value };
+      save(); renderPlace(); renderVerdict(); el("prefHours").style.display = el("blueType").value === "preferred" ? "" : "none";
+    }); });
+  });
+  el("resetBtn").onclick = function(){ cfg = Object.assign({}, DEFAULTS, { blue:{} }); save(); state.pickStreet = null; renderAll(); };
+  el("streetInput").addEventListener("input", function(){ state.pickStreet = null; renderWhere(); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".curb"), function(b){
+    b.addEventListener("click", function(){
+      state.curb = b.getAttribute("data-curb");
+      Array.prototype.forEach.call(document.querySelectorAll(".curb"), function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      renderVerdict(); el("verdict").scrollIntoView({ behavior:"smooth", block:"nearest" });
+    });
+  });
+  el("whenInput").addEventListener("change", function(){ var v = el("whenInput").value; state.when = v ? new Date(v) : null; renderAll(); });
+  el("nowBtn").onclick = function(){ el("whenInput").value = ""; state.when = null; renderAll(); };
+
+  var IN_CLAUDE = /claude\.ai|claudeusercontent/.test(location.hostname + " " + document.referrer);
+  var BLOCKED = IN_CLAUDE
+    ? "אין גישה למיקום. בדף שמוצג דרך claude.ai הדפדפן חוסם את ה-GPS, וזה צפוי. הקלד את שם הרחוב למטה."
+    : "אין הרשאה למיקום. אפשר לאשר מיקום בהגדרות הדפדפן ולרענן את הדף, או להקליד את שם הרחוב למטה.";
+  function startGeo(){
+    if(!("geolocation" in navigator)){ state.geoError = BLOCKED; renderAll(); return; }
+    try {
+      navigator.geolocation.watchPosition(function(p){
+        state.geoError = null; state.pos = [p.coords.latitude, p.coords.longitude]; state.accuracy = p.coords.accuracy;
+        locateGPS(); renderAll();
+      }, function(err){
+        state.geoError = err && err.code === 1 ? BLOCKED : "לא הצלחתי לקבל מיקום. הקלד את שם הרחוב למטה.";
+        renderAll();
+      }, { enableHighAccuracy:true, maximumAge:10000, timeout:15000 });
+    } catch(e){ state.geoError = BLOCKED; renderAll(); }
+  }
+
+  renderAll(); startGeo();
+  setInterval(function(){ if(!state.when){ renderPlace(); renderVerdict(); } }, 30000);
+
+  window.__parking = { evaluate:evaluate, blueStatus:blueStatus, dayInfo:dayInfo, paySchedule:paySchedule, current:current, segFacts:segFacts,
+    nearWarnings:nearWarnings, nearbyLots:nearbyLots, state:state, cfg:function(){ return cfg; }, setCfg:function(o){ Object.assign(cfg, o); }, D:D, segLabel:segLabel, BY_STREET:BY_STREET };
+})();
+</script>
+</body>
+</html>
