@@ -141,7 +141,7 @@
 <header>
   <div class="logo">P</div>
   <h1>חנייה עכשיו</h1>
-  <span class="tag">גרסה 4.2</span>
+  <span class="tag">גרסה 4.3</span>
 </header>
 
 <main>
@@ -150,7 +150,7 @@
     <h2>איפה אתה?</h2>
     <div class="muted" id="gpsLine">בודק אם יש גישה למיקום…</div>
     <div class="search">
-      <input type="search" id="streetInput" placeholder="הקלד שם רחוב בתל אביב-יפו" autocomplete="off" aria-label="חיפוש רחוב">
+      <input type="search" id="streetInput" placeholder="רחוב ומספר, למשל: שולמית 11" autocomplete="off" aria-label="חיפוש רחוב">
     </div>
     <div class="results" id="streetResults"></div>
     <div class="results" id="segResults"></div>
@@ -235,7 +235,7 @@
       <li>עיריית תל אביב-יפו, מדיניות חנייה: 9 אזורים בתוקף.<br><a href="https://www.tel-aviv.gov.il/Residents/Transportation/Pages/parkingpolicy.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
       <li>אפליקציות התשלום: עיריית תל אביב-יפו מציינת את פנגו, סלו ואיזיפארק. הכפתורים מובילים לדפי האפליקציות הרשמיים ב-App Store וב-Google Play.<br><a href="https://www.tel-aviv.gov.il/About/Pages/transportation.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
       <li>פנגו: תעריפים בתל אביב-יפו, מרכז העיר בלבד (אזורים 6, 7, 9, 10). לשאר האזורים אין באפליקציה תעריף מאומת.<br><a href="https://land.pango.co.il/FastPark/ParkingRates/ParkingRates" target="_blank" rel="noopener">טבלת התעריפים</a></li>
-      <li>עיריית תל אביב-יפו, מערכת המיפוי (GIS), עותק מ-15.11.2026: אזורי חניה (544), צירי רחוב (507), צמתים (836, 547), תחנות אוטובוס (956), תמרורי וקווי פריקה וטעינה (449, 450), נתיבי תחבורה ציבורית (611), רחובות מוטי הליכה (659), עבודות כבישים (852), חניונים פרטיים (555), תחנות מוניות (691), אוטותל (602), אופנועים (951), כלים זעירים (860), אזורי גרירה (616), חניוני לילה לתושבים (488), אחוזות החוף (970), חניונים ציבוריים (556). במערכת אין שכבה של תמרורי חנייה רגילים או של צבעי אבני שפה.<br><a href="https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer" target="_blank" rel="noopener">שירות המפות של העירייה</a></li>
+      <li>עיריית תל אביב-יפו, מערכת המיפוי (GIS), עותק מ-15.11.2026: אזורי חניה (544), צירי רחוב (507), כתובות (527, עותק מ-17.11.2026), צמתים (836, 547), תחנות אוטובוס (956), תמרורי וקווי פריקה וטעינה (449, 450), נתיבי תחבורה ציבורית (611), רחובות מוטי הליכה (659), עבודות כבישים (852), חניונים פרטיים (555), תחנות מוניות (691), אוטותל (602), אופנועים (951), כלים זעירים (860), אזורי גרירה (616), חניוני לילה לתושבים (488), אחוזות החוף (970), חניונים ציבוריים (556). במערכת אין שכבה של תמרורי חנייה רגילים או של צבעי אבני שפה.<br><a href="https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer" target="_blank" rel="noopener">שירות המפות של העירייה</a></li>
       <li><b>עותק ולא נתונים חיים:</b> האפליקציה לא יכולה לפנות לשרת של העירייה, ולכן היא משתמשת בעותק מ-15.11.2026. עבודות כבישים ותמרורים יכולים להשתנות מאז. מצב התפוסה בחניונים ודיווחי ווייז לא מוצגים, כי הם טובים רק בזמן אמת.</li>
       <li><b>שבת וחג:</b> החוברת הרשמית קובעת שעות תשלום רק לימים א׳–ה׳ ולשישי וערבי חג. מכאן שבשבת ובחג אין תשלום.</li>
       <li><b>אין מידע ודאי:</b> חול המועד, יום הזיכרון ויום העצמאות. בימים האלה האפליקציה לא נותנת תשובה על תשלום, ומפנה לתמרור.</li>
@@ -665,9 +665,9 @@
     else if(state.geoError) g = state.geoError;
     else g = "מחכה למיקום…";
     var cur = current();
-    var extra = cur && cur.manual ? '<div class="loc-line"><b>בחרת: ' + esc(cur.name) + ", " + esc(segLabel(cur.i)) + '</b> <button class="btn small" id="clearSeg">' + (state.pos ? "חזרה ל-GPS" : "ניקוי") + "</button></div>" : "";
+    var extra = cur && cur.manual ? '<div class="loc-line"><b>בחרת: ' + esc(cfg.addr || cur.name) + ", " + esc(segLabel(cur.i)) + '</b> <button class="btn small" id="clearSeg">' + (state.pos ? "חזרה ל-GPS" : "ניקוי") + "</button></div>" : "";
     el("gpsLine").innerHTML = esc(g) + extra;
-    var cb = el("clearSeg"); if(cb) cb.onclick = function(){ cfg.seg = null; save(); state.pickStreet = null; renderAll(); };
+    var cb = el("clearSeg"); if(cb) cb.onclick = function(){ cfg.seg = null; cfg.addr = null; save(); state.pickStreet = null; renderAll(); };
 
     // תוצאות חיפוש
     var q = el("streetInput").value.trim(), box = el("streetResults"), sbox = el("segResults");
@@ -683,22 +683,45 @@
       sbox.innerHTML = '<div class="muted">' + esc(nm) + ': באיזה קטע אתה? (' + ids.length + ')</div>' +
         ids.map(function(i){ var s = D.segs[i]; return '<button data-seg="' + i + '"' + (cfg.seg === i ? ' class="cur"' : '') + '>' + esc(segLabel(i)) + '<span class="r-sub">אזור חנייה ' + esc(s.z || "לא ידוע") + " · " + s.len + " מ׳</span></button>"; }).join("");
       Array.prototype.forEach.call(sbox.querySelectorAll("button[data-seg]"), function(b){
-        b.onclick = function(){ cfg.seg = +b.getAttribute("data-seg"); save(); state.pickStreet = null; el("streetInput").value = ""; renderAll(); el("place").scrollIntoView({ behavior:"smooth", block:"start" }); };
+        b.onclick = function(){ chooseSeg(+b.getAttribute("data-seg"), null); };
       });
       return;
     }
     if(q.length < 2) return;
-    var hits = STREET_LIST.filter(function(s){ return s.name.indexOf(q) >= 0; });
-    hits.sort(function(a, b){ return (a.name.indexOf(q) === 0 ? 0 : 1) - (b.name.indexOf(q) === 0 ? 0 : 1) || a.name.length - b.name.length; });
+    // "שולמית 11" או "שולמית 11א": שם רחוב + מספר בית
+    var m = q.match(/^(.*?)[\s,]+(\d+\s*[א-ת]?)$/), num = null, sq = q;
+    if(m && m[1].trim().length >= 2){ sq = m[1].trim(); num = m[2].replace(/\s+/g, ""); }
+    var hits = STREET_LIST.filter(function(s){ return s.name.indexOf(sq) >= 0; });
+    hits.sort(function(a, b){ return (a.name.indexOf(sq) === 0 ? 0 : 1) - (b.name.indexOf(sq) === 0 ? 0 : 1) || a.name.length - b.name.length; });
     if(!hits.length){ box.innerHTML = '<div class="muted">לא מצאתי רחוב בשם הזה במפת העירייה.</div>'; return; }
-    box.innerHTML = hits.slice(0, 8).map(function(s){ return '<button data-k="' + esc(s.k) + '">' + esc(s.name) + '<span class="r-sub">' + BY_STREET[s.k].length + " קטעים</span></button>"; }).join("");
+    box.innerHTML = hits.slice(0, 8).map(function(s){
+      if(num){
+        var a = findAddr(s.k, num);
+        if(a) return '<button data-k="' + esc(s.k) + '" data-seg="' + a[1] + '" data-addr="' + esc(s.name + " " + a[0]) + '">' + esc(s.name + " " + a[0]) + '<span class="r-sub">' + esc(segLabel(a[1])) + '</span></button>';
+        return '<button data-k="' + esc(s.k) + '">' + esc(s.name) + '<span class="r-sub">אין במפה מספר ' + esc(num) + ' ברחוב הזה. לחץ כדי לבחור קטע.</span></button>';
+      }
+      return '<button data-k="' + esc(s.k) + '">' + esc(s.name) + '<span class="r-sub">' + BY_STREET[s.k].length + " קטעים · אפשר גם להקליד מספר בית</span></button>";
+    }).join("");
     Array.prototype.forEach.call(box.querySelectorAll("button[data-k]"), function(b){
       b.onclick = function(){
-        var k = b.getAttribute("data-k");
-        if(BY_STREET[k].length === 1){ cfg.seg = BY_STREET[k][0]; save(); el("streetInput").value = ""; state.pickStreet = null; renderAll(); return; }
+        var k = b.getAttribute("data-k"), sg = b.getAttribute("data-seg");
+        if(sg !== null){ chooseSeg(+sg, b.getAttribute("data-addr")); return; }
+        if(BY_STREET[k].length === 1){ chooseSeg(BY_STREET[k][0], null); return; }
         state.pickStreet = k; renderWhere();
       };
     });
+  }
+  function findAddr(k, num){
+    var list = (D.addr || {})[k]; if(!list) return null;
+    for(var i=0;i<list.length;i++) if(list[i][0] === num) return list[i];
+    var base = num.replace(/[^\d]/g, "");
+    for(var j=0;j<list.length;j++) if(list[j][0] === base) return list[j];
+    return null;
+  }
+  function chooseSeg(i, addrLabel){
+    cfg.seg = i; cfg.addr = addrLabel || null; save();
+    state.pickStreet = null; el("streetInput").value = ""; renderAll();
+    el("place").scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
   function renderPlace(){
@@ -706,7 +729,7 @@
     var info = dayInfo(now), hd = hebDateText(now);
 
     var title, sub;
-    if(cur){ title = "רחוב " + cur.name + (cur.zone ? " · אזור חנייה " + cur.zone : " · מחוץ לאזורי החנייה"); sub = segLabel(cur.i) + " · " + cur.s.len + " מ׳" + (cur.manual ? " · נבחר ידנית" : " · לפי GPS"); }
+    if(cur){ title = (cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name) + (cur.zone ? " · אזור חנייה " + cur.zone : " · מחוץ לאזורי החנייה"); sub = segLabel(cur.i) + " · " + cur.s.len + " מ׳" + (cur.manual ? " · נבחר ידנית" : " · לפי GPS"); }
     else { title = "עוד לא נבחר רחוב"; sub = "בחר רחוב למעלה כדי לראות מה מותר ומה אסור בו."; }
     html += '<div class="place-head"><div class="pin">📍</div><div><div class="place-title">' + esc(title) + '</div><div class="muted">' + esc(sub) + '</div></div></div>';
 
