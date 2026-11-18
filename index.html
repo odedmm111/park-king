@@ -134,6 +134,11 @@
   .facts q{font-style:normal;background:#f1f5f9;border-radius:6px;padding:1px 6px;display:inline}
   .facts q::before,.facts q::after{content:""}
   .loc-line{font-size:14px;margin-top:6px}
+  .curb-sec{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+  details.more{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  details.more summary{cursor:pointer;font-weight:700;color:var(--accent);list-style:none}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more summary::after{content:" ▾"} details.more[open] summary::after{content:" ▴"}
   .pay{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
   .pay a{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:10px 8px;font-weight:700;background:var(--accent);color:#fff}
   .pay a small{display:block;font-weight:400;font-size:12px;opacity:.85}
@@ -141,7 +146,7 @@
 <header>
   <div class="logo">P</div>
   <h1>חנייה עכשיו</h1>
-  <span class="tag">גרסה 4.3</span>
+  <span class="tag">גרסה 4.4</span>
 </header>
 
 <main>
@@ -158,18 +163,6 @@
 
   <!-- 1. מה ידוע על המקום -->
   <section class="card" id="place" aria-live="polite"></section>
-
-  <!-- 2. תשובה למקום המדויק -->
-  <section class="card">
-    <h2>רוצה תשובה למקום שעצרת בו? בחר את צבע אבן השפה</h2>
-    <div class="curbs">
-      <button class="curb" data-curb="blue" aria-pressed="false"><div class="stripe s-blue"></div><b>כחול-לבן</b><span>חנייה בתשלום או לבעלי תו</span></button>
-      <button class="curb" data-curb="none" aria-pressed="false"><div class="stripe s-none"></div><b>ללא סימון</b><span>אבן שפה אפורה</span></button>
-      <button class="curb" data-curb="redwhite" aria-pressed="false"><div class="stripe s-redwhite"></div><b>אדום-לבן</b><span>איסור עצירה וחנייה</span></button>
-      <button class="curb" data-curb="redyellow" aria-pressed="false"><div class="stripe s-redyellow"></div><b>אדום-צהוב</b><span>עצירה לרכב מסוים בלבד</span></button>
-    </div>
-  </section>
-  <section id="verdict" class="verdict idle" aria-live="polite"></section>
 
   <!-- 3. בדיקה לשעה אחרת -->
   <section class="card">
@@ -665,7 +658,7 @@
     else if(state.geoError) g = state.geoError;
     else g = "מחכה למיקום…";
     var cur = current();
-    var extra = cur && cur.manual ? '<div class="loc-line"><b>בחרת: ' + esc(cfg.addr || cur.name) + ", " + esc(segLabel(cur.i)) + '</b> <button class="btn small" id="clearSeg">' + (state.pos ? "חזרה ל-GPS" : "ניקוי") + "</button></div>" : "";
+    var extra = cur && cur.manual ? '<div class="loc-line"><b>בחרת: ' + esc(cfg.addr || (cur.name + ", " + segLabel(cur.i))) + '</b> <button class="btn small" id="clearSeg">' + (state.pos ? "חזרה ל-GPS" : "ניקוי") + "</button></div>" : "";
     el("gpsLine").innerHTML = esc(g) + extra;
     var cb = el("clearSeg"); if(cb) cb.onclick = function(){ cfg.seg = null; cfg.addr = null; save(); state.pickStreet = null; renderAll(); };
 
@@ -724,75 +717,101 @@
     el("place").scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
+  var CURBS = [
+    ["blue", "s-blue", "כחול-לבן", "חנייה בתשלום או לבעלי תו"],
+    ["none", "s-none", "אפור, ללא סימון", "אבן שפה לא צבועה"],
+    ["redwhite", "s-redwhite", "אדום-לבן", "איסור עצירה וחנייה"],
+    ["redyellow", "s-redyellow", "אדום-צהוב", "עצירה לרכב מסוים בלבד"]
+  ];
+  function curbHtml(){
+    return '<div class="sec curb-sec"><div class="sec-h" style="font-size:15px;color:var(--ink)">מה צבע אבן השפה איפה שעצרת?</div><div class="curbs">' +
+      CURBS.map(function(c){ return '<button class="curb" data-curb="' + c[0] + '" aria-pressed="' + (state.curb === c[0] ? "true" : "false") + '"><div class="stripe ' + c[1] + '"></div><b>' + c[2] + '</b><span>' + c[3] + '</span></button>'; }).join("") +
+      '</div><section id="verdict" class="verdict idle" aria-live="polite" style="margin-top:10px"></section></div>';
+  }
+
   function renderPlace(){
-    var box = el("place"), now = state.when || new Date(), html = "", cur = current();
+    var box = el("place"), now = state.when || new Date(), html = "", more = "", cur = current();
     var info = dayInfo(now), hd = hebDateText(now);
 
+    // 1. כותרת: הכתובת, בלי הקטע
     var title, sub;
-    if(cur){ title = (cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name) + (cur.zone ? " · אזור חנייה " + cur.zone : " · מחוץ לאזורי החנייה"); sub = segLabel(cur.i) + " · " + cur.s.len + " מ׳" + (cur.manual ? " · נבחר ידנית" : " · לפי GPS"); }
-    else { title = "עוד לא נבחר רחוב"; sub = "בחר רחוב למעלה כדי לראות מה מותר ומה אסור בו."; }
+    if(cur){
+      title = cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name;
+      sub = (cur.zone ? "אזור חנייה " + cur.zone : "מחוץ לאזורי החנייה") + (cur.manual ? " · נבחר ידנית" : " · לפי GPS");
+    } else { title = "עוד לא נבחרה כתובת"; sub = "הקלד רחוב ומספר בית למעלה, למשל: עמוס 13."; }
     html += '<div class="place-head"><div class="pin">📍</div><div><div class="place-title">' + esc(title) + '</div><div class="muted">' + esc(sub) + '</div></div></div>';
 
     var special = info.type !== "weekday";
     var sched = cur && cur.zone ? paySchedule(now, cur.zone) : null;
     html += '<div class="day-strip' + (special ? ' special' : '') + '"><b>היום: ' + esc(info.name) + '</b>' + (hd ? ' <span class="muted">· ' + esc(hd) + '</span>' : '') +
-            '<div class="muted">' + (sched
-              ? (sched.unknown ? "שעות התשלום היום: אין לי מידע ודאי. בדוק בתמרור." : sched.start ? "שעות תשלום בכחול-לבן: " + sched.start + "–" + sched.end : "אין היום שעות תשלום בכחול-לבן")
-              : "") + '</div></div>';
+            (sched ? '<div class="muted">' + (sched.unknown ? "שעות התשלום היום: אין לי מידע ודאי." : sched.start ? "שעות תשלום בכחול-לבן: " + sched.start + "–" + sched.end : "אין היום שעות תשלום בכחול-לבן") + '</div>' : '') + '</div>';
 
     if(cur){
+      // 2. מה משלמים כאן
       var st = blueStatus(now, cur);
       var chLine = st.change ? esc(st.changeText) + ": " + esc(fmtAt(now, st.change)) + " (" + esc(fmtLeft(st.change - now)) + ")" : "";
-      html += '<div class="status ' + st.level + '"><div class="s-label">כחול-לבן ברחוב הזה, עבורך, עכשיו</div><div class="s-main">' + esc(st.main) + '</div>' +
+      html += '<div class="status ' + st.level + '"><div class="s-label">בכחול-לבן כאן, עבורך, עכשיו</div><div class="s-main">' + esc(st.main) + '</div>' +
               (chLine ? '<div class="s-sub">' + chLine + '</div>' : '') + '</div>';
+      // אזהרות GPS בלבד (מדויקות למקום שבו אתה עומד)
       (st.warn || []).concat(nearWarnings()).filter(Boolean).forEach(function(w){ html += '<div class="warn">⚠️ ' + esc(w) + '</div>'; });
 
       if(cur.zone){
         var pr = profile(cur.zone), z = cur.zone, center = isCenter(z);
         var meOwn = pr.ownZone, meOther = pr.hasPermit && !pr.ownZone, meVisitor = !pr.hasPermit;
-        html += '<div class="sec"><div class="sec-h">מי משלם כאן ' + (cfg.permit === "none" && !cfg.myZone ? "" : "(השורה שלך מודגשת)") + '</div>' +
+        html += '<div class="sec"><div class="sec-h">מה משלמים כאן ' + (cfg.permit === "none" && !cfg.myZone ? "" : "(השורה שלך מודגשת)") + '</div>' +
           '<div class="who' + (meOwn ? ' me' : '') + '"><span>בעלי תו אזור ' + esc(z) + '</span><b>חינם, כל היום</b></div>' +
           '<div class="who' + (meOther ? ' me' : '') + '"><span>תו תל אביב מאזור אחר</span><b>שעתיים חינם, אחר כך ' + (center ? RATE_RESIDENT_CENTER + ' ₪' : '30% הנחה') + '</b></div>' +
           '<div class="who' + (meVisitor ? ' me' : '') + '"><span>מבקר בלי תו</span><b>' + (center ? RATE_VISITOR_CENTER + ' ₪ לשעה' : 'אין לי מידע ודאי על התעריף') + '</b></div></div>';
+        html += payHtml();
       }
+    }
 
-      if(cur.zone) html += payHtml();
+    // 3. צבע אבן השפה, ומתחתיו התשובה המדויקת
+    html += curbHtml();
 
+    // 4. עוד מידע, סגור כברירת מחדל
+    if(cur){
+      more += '<div class="muted" style="margin-top:8px">הכתובת נמצאת בקטע ' + esc(cur.name) + ' ' + esc(segLabel(cur.i)) + ' (' + cur.s.len + ' מ׳).</div>';
       var facts = segFacts(cur);
-      html += '<div class="sec"><div class="sec-h">בקטע הזה, לפי מפת העירייה (' + esc(D.checked) + ')</div>' +
+      more += '<div class="sec"><div class="sec-h">ברחוב הזה, לפי מפת העירייה (' + esc(D.checked) + ')</div>' +
         (facts.length ? '<ul class="facts">' + facts.map(function(f){ return '<li><span class="ic">' + f.ic + '</span><span>' + esc(f.t) + (f.q ? '<q>' + esc(f.q) + '</q>' : '') + esc(f.tail || "") + '</span></li>'; }).join("") + '</ul>'
-                     : '<div class="muted">אין במפת העירייה פרטים נוספים על הקטע הזה.</div>') +
-        '<div class="muted" style="margin-top:6px">במפה אין את תמרורי החנייה הרגילים ואת צבעי אבני השפה. אותם צריך לבדוק בשטח.</div></div>';
-
+                     : '<div class="muted">אין במפת העירייה פרטים נוספים על הקטע הזה.</div>') + '</div>';
       var lots = nearbyLots(state.pos && !cur.manual ? state.pos : segMid(cur.s));
       if(lots.length){
-        html += '<div class="sec"><div class="sec-h">חניונים קרובים</div><ul class="facts">' + lots.map(function(L){
+        more += '<div class="sec"><div class="sec-h">חניונים קרובים</div><ul class="facts">' + lots.map(function(L){
           return '<li><span class="ic">🅿️</span><span><b>' + esc(L.name) + '</b>' + (L.addr ? ", " + esc(L.addr) : "") + ' <span class="muted">(כ-' + Math.round(L.d / 10) * 10 + ' מ׳)</span>' +
             (L.type ? '<br><span class="muted">' + esc(L.type) + '</span>' : '') + (L.rate ? '<br>' + esc(L.rate) : '') + (L.note ? '<br><span class="muted">' + esc(L.note) + '</span>' : '') + '</span></li>';
         }).join("") + '</ul><div class="muted" style="margin-top:6px">מצב התפוסה לא מוצג, כי האפליקציה עובדת עם עותק של הנתונים ולא עם נתונים חיים.</div></div>';
       }
     }
-
-    html += '<div class="sec"><div class="lists">' +
+    more += '<div class="sec"><div class="lists">' +
       '<div class="list allow"><h3>✅ מותר</h3><ul>' +
-        '<li>כחול-לבן: מחוץ לשעות התשלום, חינם' + (cur ? '' : ' (לפי התמרור)') + '.</li>' +
+        '<li>כחול-לבן: מחוץ לשעות התשלום, חינם.</li>' +
         '<li>כחול-לבן בשעות התשלום: בתשלום דרך אפליקציה, או חינם עם תו של האזור.</li>' +
         '<li>אבן שפה לא צבועה: הסימון לא אוסר. אם יש תמרור, הוא קובע.</li>' +
         '<li>בשבת ובחג: אין תשלום בכחול-לבן.</li></ul></div>' +
       '<div class="list deny"><h3>⛔ אסור</h3><ul>' + DENY.map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + '</ul></div>' +
       '</div></div>';
-
     var up = upcomingSpecial(now);
     if(up.length){
-      html += '<div class="sec"><div class="sec-h">חגים ומועדים קרובים</div><div class="upcoming">' +
+      more += '<div class="sec"><div class="sec-h">חגים ומועדים קרובים</div><div class="upcoming">' +
         up.map(function(u){
           var when = u.k === 0 ? "היום" : u.k === 1 ? "מחר" : "יום " + DAYS[u.d.getDay()] + " " + fmtDate(u.d);
           return '<div class="u-row"><span><b>' + esc(u.name) + '</b><br><span class="muted">' + esc(u.eff) + '</span></span><span class="u-when">' + esc(when) + '</span></div>';
         }).join("") + '</div></div>';
     }
+    more += '<div class="stamp">הכללים נבדקו לאחרונה: ' + RULES_CHECKED + '. נתוני המפה: עותק מ-' + esc(D ? D.checked : "?") + '. העירייה מכריזה לפעמים על חנייה חינם (בחירות, מצב חירום), והאפליקציה לא יודעת על זה.</div>';
+    html += '<details class="more" id="moreInfo"' + (state.moreOpen ? ' open' : '') + '><summary>עוד מידע על הכתובת</summary>' + more + '</details>';
 
-    html += '<div class="stamp">הכללים נבדקו לאחרונה: ' + RULES_CHECKED + '. נתוני המפה: עותק מ-' + esc(D ? D.checked : "?") + '. העירייה מכריזה לפעמים על חנייה חינם (בחירות, מצב חירום), והאפליקציה לא יודעת על זה.</div>';
     box.innerHTML = html;
+    el("moreInfo").addEventListener("toggle", function(){ state.moreOpen = el("moreInfo").open; });
+    Array.prototype.forEach.call(box.querySelectorAll(".curb"), function(b){
+      b.addEventListener("click", function(){
+        state.curb = b.getAttribute("data-curb");
+        renderPlace(); renderVerdict();
+        el("verdict").scrollIntoView({ behavior:"smooth", block:"nearest" });
+      });
+    });
   }
 
   function renderVerdict(){
@@ -836,13 +855,6 @@
   el("resetBtn").onclick = function(){ cfg = Object.assign({}, DEFAULTS, { blue:{} }); save(); state.pickStreet = null; renderAll(); };
   el("streetInput").addEventListener("input", function(){ state.pickStreet = null; renderWhere(); });
 
-  Array.prototype.forEach.call(document.querySelectorAll(".curb"), function(b){
-    b.addEventListener("click", function(){
-      state.curb = b.getAttribute("data-curb");
-      Array.prototype.forEach.call(document.querySelectorAll(".curb"), function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
-      renderVerdict(); el("verdict").scrollIntoView({ behavior:"smooth", block:"nearest" });
-    });
-  });
   el("whenInput").addEventListener("change", function(){ var v = el("whenInput").value; state.when = v ? new Date(v) : null; renderAll(); });
   el("nowBtn").onclick = function(){ el("whenInput").value = ""; state.when = null; renderAll(); };
 
