@@ -149,7 +149,7 @@
 <header>
   <div class="logo">P</div>
   <h1>חנייה עכשיו</h1>
-  <span class="tag">גרסה 4.5</span>
+  <span class="tag">גרסה 4.6</span>
 </header>
 
 <main>
@@ -230,7 +230,7 @@
       <li>עיריית תל אביב-יפו, הסדרי החניה 2025: אזורים, שעות תשלום (א׳–ה׳, שישי וערבי חג), תו חנייה, חנייה מועדפת ומוסדרת.<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת העירייה (PDF)</a></li>
       <li>עיריית תל אביב-יפו, מדיניות חנייה: 9 אזורים בתוקף.<br><a href="https://www.tel-aviv.gov.il/Residents/Transportation/Pages/parkingpolicy.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
       <li>אפליקציות התשלום: עיריית תל אביב-יפו מציינת את פנגו, סלו ואיזיפארק. הכפתורים מובילים לדפי האפליקציות הרשמיים ב-App Store וב-Google Play.<br><a href="https://www.tel-aviv.gov.il/About/Pages/transportation.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
-      <li>פנגו: תעריפים בתל אביב-יפו, מרכז העיר בלבד (אזורים 6, 7, 9, 10). לשאר האזורים אין באפליקציה תעריף מאומת.<br><a href="https://land.pango.co.il/FastPark/ParkingRates/ParkingRates" target="_blank" rel="noopener">טבלת התעריפים</a></li>
+      <li>תעריפים: חוק עזר לתל-אביב-יפו (העמדת רכב וחנייתו), התוספת השנייה, תיקון תשפ"ה-2024 (בתוקף מ-1.1.2025). אזורים 6, 7, 9, 10: ‏12.40 ₪ לשעה. שאר האזורים: 7 ₪ לשעה. תושב העיר מחוץ לאזור שלו: 30% הנחה (8.68 ₪ או 4.90 ₪), לפי חוברת העירייה.<br><a href="https://www.nevo.co.il/law_html/law01/mek_001_005.htm" target="_blank" rel="noopener">חוק העזר בנבו</a> · <a href="https://land.pango.co.il/FastPark/ParkingRates/ParkingRates" target="_blank" rel="noopener">טבלת התעריפים של פנגו</a></li>
       <li>עיריית תל אביב-יפו, מערכת המיפוי (GIS), עותק מ-15.11.2026: אזורי חניה (544), צירי רחוב (507), כתובות (527, עותק מ-17.11.2026), צמתים (836, 547), תחנות אוטובוס (956), תמרורי וקווי פריקה וטעינה (449, 450), נתיבי תחבורה ציבורית (611), רחובות מוטי הליכה (659), עבודות כבישים (852), חניונים פרטיים (555), תחנות מוניות (691), אוטותל (602), אופנועים (951), כלים זעירים (860), אזורי גרירה (616), חניוני לילה לתושבים (488), אחוזות החוף (970), חניונים ציבוריים (556). במערכת אין שכבה של תמרורי חנייה רגילים או של צבעי אבני שפה.<br><a href="https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer" target="_blank" rel="noopener">שירות המפות של העירייה</a></li>
       <li><b>עותק ולא נתונים חיים:</b> האפליקציה לא יכולה לפנות לשרת של העירייה, ולכן היא משתמשת בעותק מ-15.11.2026. עבודות כבישים ותמרורים יכולים להשתנות מאז. מצב התפוסה בחניונים ודיווחי ווייז לא מוצגים, כי הם טובים רק בזמן אמת.</li>
       <li><b>שבת וחג:</b> החוברת הרשמית קובעת שעות תשלום רק לימים א׳–ה׳ ולשישי וערבי חג. מכאן שבשבת ובחג אין תשלום.</li>
@@ -253,7 +253,10 @@
   var D = window.PARKING_DATA || null;
   var RULES_CHECKED = "15.11.2026";
   var CENTER_ZONES = ["6","7","9","10"];                 // תשלום עד 21:00
-  var RATE_VISITOR_CENTER = "12.40", RATE_RESIDENT_CENTER = "8.68";   // פנגו, מרכז העיר בלבד
+  var RATE_VISITOR_CENTER = "12.40", RATE_RESIDENT_CENTER = "8.68";   // חוק העזר, תוספת שנייה (ב1), אזורים 6, 7, 9, 10
+  var RATE_VISITOR_OTHER = "7.00", RATE_RESIDENT_OTHER = "4.90";      // חוק העזר, תוספת שנייה (ב), שאר האזורים; תושב = 30% הנחה
+  function rateVisitor(zone){ return isCenter(zone) ? RATE_VISITOR_CENTER : RATE_VISITOR_OTHER; }
+  function rateResident(zone){ return isCenter(zone) ? RATE_RESIDENT_CENTER : RATE_RESIDENT_OTHER; }
 
   // אפליקציות תשלום שעיריית תל אביב-יפו מציינת באתרה. קישורים לדפי האפליקציה הרשמיים בחנויות.
   // איזיפארק לא נכללה: לא אומת איזו אפליקציה פועלת בעיר.
@@ -513,11 +516,11 @@
       if(prefNext && prefNext < pEnd){ ch = prefNext; chText = "מתחילות שעות לבעלי תו בלבד"; }
       if(pr.hasPermit) return { level:"cond", badge:"בתשלום, עם הטבת תושב", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
         sub: cfg.myZone
-          ? "התו שלך מאזור " + cfg.myZone + ". מחוץ לאזור שלך: שעתיים ראשונות ביממה חינם (במצטבר), אחר כך " + (center ? RATE_RESIDENT_CENTER + " ₪ לשעה" : "30% הנחה מהתעריף (התעריף באזור הזה: אין לי מידע ודאי)") + ". חובה להפעיל אפליקציית חנייה מהדקה הראשונה."
-          : "אם התו שלך של אזור " + zone + ", החנייה חינם. אם לא: שעתיים חינם ביממה דרך אפליקציית חנייה, ואחר כך " + (center ? RATE_RESIDENT_CENTER + " ₪ לשעה" : "30% הנחה מהתעריף") + ". בחר את אזור התו בהגדרות.",
+          ? "התו שלך מאזור " + cfg.myZone + ". מחוץ לאזור שלך: שעתיים ראשונות ביממה חינם (במצטבר), אחר כך " + rateResident(zone) + " ₪ לשעה. חובה להפעיל אפליקציית חנייה מהדקה הראשונה."
+          : "אם התו שלך של אזור " + zone + ", החנייה חינם. אם לא: שעתיים חינם ביממה דרך אפליקציית חנייה, ואחר כך " + rateResident(zone) + " ₪ לשעה. בחר את אזור התו בהגדרות.",
         change:ch, changeText:chText };
       return { level:"cond", badge:"בתשלום", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
-        sub: center ? "תעריף מבקר: " + RATE_VISITOR_CENTER + " ₪ לשעה. משלמים דרך אפליקציית חנייה." : "התעריף באזור " + zone + ": אין לי מידע ודאי. משלמים דרך אפליקציית חנייה, והיא מציגה את התעריף.",
+        sub: "תעריף מבקר: " + rateVisitor(zone) + " ₪ לשעה. משלמים דרך אפליקציית חנייה.",
         change:ch, changeText:chText };
     }
     var nx = nextStart(ws, now), nxText = "מתחיל תשלום";
@@ -796,8 +799,8 @@
         var meOwn = pr.ownZone, meOther = pr.hasPermit && !pr.ownZone, meVisitor = !pr.hasPermit;
         html += '<div class="sec"><div class="sec-h">מה משלמים כאן ' + (cfg.permit === "none" && !cfg.myZone ? "" : "(השורה שלך מודגשת)") + '</div>' +
           '<div class="who' + (meOwn ? ' me' : '') + '"><span>בעלי תו אזור ' + esc(z) + '</span><b>חינם, כל היום</b></div>' +
-          '<div class="who' + (meOther ? ' me' : '') + '"><span>תו תל אביב מאזור אחר</span><b>שעתיים חינם, אחר כך ' + (center ? RATE_RESIDENT_CENTER + ' ₪' : '30% הנחה') + '</b></div>' +
-          '<div class="who' + (meVisitor ? ' me' : '') + '"><span>מבקר בלי תו</span><b>' + (center ? RATE_VISITOR_CENTER + ' ₪ לשעה' : 'אין לי מידע ודאי על התעריף') + '</b></div></div>';
+          '<div class="who' + (meOther ? ' me' : '') + '"><span>תו תל אביב מאזור אחר</span><b>שעתיים חינם, אחר כך ' + rateResident(z) + ' ₪</b></div>' +
+          '<div class="who' + (meVisitor ? ' me' : '') + '"><span>מבקר בלי תו</span><b>' + rateVisitor(z) + ' ₪ לשעה</b></div></div>';
         html += payHtml();
       }
     }
