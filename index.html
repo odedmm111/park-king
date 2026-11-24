@@ -432,7 +432,6 @@
   var LOT_STATES = { "פנוי":1, "מעט":1, "מלא":1, "סגור":1 };
   function cleanTxt(t){ return String(t == null ? "" : t).replace(/\r/g, " ").replace(/\n/g, " / ").replace(/‡/g, "·").replace(/\s+/g, " ").replace(/(\s*\/\s*){2,}/g, " / ").replace(/^[\s\/·]+|[\s\/·]+$/g, ""); }
   function parseDMY(t){ var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t || ""); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; }
-  function hhmm(d){ return (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(); }
   // בשכבת אחוזות החוף שעת העדכון נשמרת כשעון ישראל שמקודד כאילו היה UTC
   function lotTime(ms){ if(!ms) return null; var u = new Date(ms); return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes()); }
   function gisQuery(layer, params){
