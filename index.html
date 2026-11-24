@@ -149,7 +149,7 @@
 <header>
   <div class="logo">P</div>
   <h1>חנייה עכשיו</h1>
-  <span class="tag">גרסה 4.6</span>
+  <span class="tag">גרסה 4.7</span>
 </header>
 
 <main>
@@ -426,6 +426,71 @@
     for(var i=0;i+3<flat.length;i+=2) d = Math.min(d, distToSeg(p, [flat[i],flat[i+1]], [flat[i+2],flat[i+3]]));
     return d;
   }
+  /* =================== נתונים חיים מהעירייה =================== */
+  var GIS = "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer/";
+  var LIVE = { works:null, worksAt:null, lots:null, lotsAt:null };
+  var LOT_STATES = { "פנוי":1, "מעט":1, "מלא":1, "סגור":1 };
+  function cleanTxt(t){ return String(t == null ? "" : t).replace(/\r/g, " ").replace(/\n/g, " / ").replace(/‡/g, "·").replace(/\s+/g, " ").replace(/(\s*\/\s*){2,}/g, " / ").replace(/^[\s\/·]+|[\s\/·]+$/g, ""); }
+  function parseDMY(t){ var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t || ""); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; }
+  function hhmm(d){ return (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(); }
+  // בשכבת אחוזות החוף שעת העדכון נשמרת כשעון ישראל שמקודד כאילו היה UTC
+  function lotTime(ms){ if(!ms) return null; var u = new Date(ms); return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes()); }
+  function gisQuery(layer, params){
+    return fetch(GIS + layer + "/query?" + new URLSearchParams(params)).then(function(r){ if(!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function(j){ if(j.error) throw new Error("gis"); return j; });
+  }
+  function loadLiveWorks(){
+    return gisQuery(852, { where:"1=1", outFields:"t_ktovet,mahut_avoda,tzimtzum_netivim,sivug_yom_layla,time_start,time_end,date_start,date_end,commnets", outSR:"4326", f:"geojson" }).then(function(j){
+      var list = [];
+      (j.features || []).forEach(function(f){
+        if(!f.geometry || f.geometry.type !== "LineString") return;
+        var p = f.properties || {}, flat = [];
+        f.geometry.coordinates.forEach(function(c){ flat.push(c[1], c[0]); });
+        list.push({ W:[cleanTxt(p.t_ktovet), cleanTxt(p.mahut_avoda), cleanTxt(p.tzimtzum_netivim), cleanTxt(p.sivug_yom_layla), p.time_start, p.time_end, p.date_start, p.date_end, cleanTxt(p.commnets)],
+                    flat:flat, from:parseDMY(p.date_start), to:parseDMY(p.date_end) });
+      });
+      LIVE.works = list; LIVE.worksAt = new Date(); renderAll();
+    }).catch(function(){});
+  }
+  function loadLiveLots(){
+    return gisQuery(970, { where:"1=1", outFields:"shem_chenyon,status_chenyon,tr_status_chenyon", returnGeometry:"false", f:"json" }).then(function(j){
+      var m = {};
+      (j.features || []).forEach(function(f){ var a = f.attributes || {}; if(LOT_STATES[a.status_chenyon]) m[cleanTxt(a.shem_chenyon)] = { st:a.status_chenyon, at:lotTime(a.tr_status_chenyon) }; });
+      LIVE.lots = m; LIVE.lotsAt = new Date(); renderAll();
+    }).catch(function(){});
+  }
+  // עבודות בקטע: חיות מהעירייה אם נטענו, אחרת מהעותק. רק עבודות שפעילות ביום הנבחר, או שמתחילות בשבוע שאחריו.
+  function worksOnSeg(cur, when){
+    var day = new Date(when.getFullYear(), when.getMonth(), when.getDate()), soon = new Date(day.getTime() + 7*864e5), out = [];
+    function active(from, to){ return (!to || to >= day) && (!from || from <= soon); }
+    if(LIVE.works){
+      var seg = cur.s.p, lat0 = Infinity, lat1 = -Infinity, lon0 = Infinity, lon1 = -Infinity;
+      for(var i = 0; i < seg.length; i += 2){ lat0 = Math.min(lat0, seg[i]); lat1 = Math.max(lat1, seg[i]); lon0 = Math.min(lon0, seg[i+1]); lon1 = Math.max(lon1, seg[i+1]); }
+      LIVE.works.forEach(function(w){
+        if(!active(w.from, w.to)) return;
+        var f = w.flat, near = 0, any = false;
+        for(var k = 0; k + 1 < f.length; k += 2){ if(f[k] > lat0 - 0.0003 && f[k] < lat1 + 0.0003 && f[k+1] > lon0 - 0.0004 && f[k+1] < lon1 + 0.0004){ any = true; break; } }
+        if(!any) return;
+        for(var k2 = 0; k2 + 3 < f.length || k2 === 0; k2 += 2){
+          var a = [f[k2], f[k2+1]], b = k2 + 3 < f.length ? [f[k2+2], f[k2+3]] : a, n = Math.max(1, Math.ceil(distPt(a, b) / 5));
+          for(var t = 0; t <= n; t++){ var q = [a[0] + (b[0]-a[0])*t/n, a[1] + (b[1]-a[1])*t/n]; if(distLine(q, seg) <= 10) near++; }
+          if(k2 + 3 >= f.length) break;
+        }
+        if(near >= 2) out.push({ W:w.W, from:w.from, live:true });
+      });
+    } else {
+      (cur.s.wk || []).forEach(function(i){ var W = D.works[i], from = parseDMY(W[6]), to = parseDMY(W[7]); if(active(from, to)) out.push({ W:W, from:from, live:false }); });
+    }
+    return out;
+  }
+  function workText(x, day){
+    var W = x.W, starts = x.from && x.from > day;
+    return "עבודות" + (W[0] ? " ב" + W[0] : "") + (W[1] ? ": " + W[1] : "") + (W[2] ? ", " + W[2] : "") +
+      (starts ? ". מתחילות ב-" + W[6] + (W[7] ? " ונמשכות עד " + W[7] : "") : (W[6] || W[7] ? ". תאריכים: " + (W[6] || "?") + " עד " + (W[7] || "?") : "")) +
+      (W[4] && W[5] ? ", " + W[4] + "–" + W[5] : "") + ". " +
+      (x.live ? "(מהעירייה, עודכן " + hhmm(LIVE.worksAt) + ")" : "(נכון ל-" + D.checked + ")");
+  }
+
   function segMid(s){ var n = s.p.length/2, i = Math.floor((n-1)/2)*2, j = Math.ceil((n-1)/2)*2; return [(s.p[i]+s.p[j])/2, (s.p[i+1]+s.p[j+1])/2]; }
 
   /* =================== רחובות וקטעים =================== */
@@ -557,7 +622,8 @@
         (h.length ? "שעות פעילות לפי המפה: " + h.join(", ") + "." : "שעות הפעילות לא רשומות במפה, בדוק בתמרור.") + (B[10] && B[10] !== "פעיל" ? " סטטוס: " + B[10] + "." : "") });
     });
     (s.pd || []).forEach(function(i){ var P = D.ped[i]; out.push({ ic:"🚶", t:"רחוב מוטה הולכי רגל" + (P[3] ? " (" + P[3] + ")" : "") + ": " + (P[1] || "") + (P[2] ? ". " + P[2] : "") + "." }); });
-    (s.wk || []).forEach(function(i){ var W = D.works[i]; out.push({ ic:"🚧", t:"עבודות" + (W[0] ? " ב" + W[0] : "") + (W[1] ? ": " + W[1] : "") + (W[2] ? ", " + W[2] : "") + (W[6] || W[7] ? ". תאריכים: " + (W[6] || "?") + " עד " + (W[7] || "?") : "") + (W[4] && W[5] ? ", " + W[4] + "–" + W[5] : "") + ". (נכון ל-" + D.checked + ")" }); });
+    var wNow = state.when || new Date(), wDay = new Date(wNow.getFullYear(), wNow.getMonth(), wNow.getDate());
+    worksOnSeg(cur, wNow).forEach(function(x){ out.push({ ic:"🚧", t:workText(x, wDay) }); });
     var pvBy = {}, pvOrder = [];
     (s.pv || []).forEach(function(i){ var P = D.private[i]; if(!pvBy[P[2]]){ pvBy[P[2]] = 0; pvOrder.push(P[2]); } pvBy[P[2]] += (+P[3] || 0); });
     if(pvOrder.length) out.push({ ic:"🏠", t:"חניונים פרטיים רשומים ב: " + pvOrder.map(function(a){ return a + (pvBy[a] ? " (" + pvBy[a] + " רכבים)" : ""); }).join(", ") + ". אסור לחנות מול כניסה לחנייה. איפה בדיוק הכניסות, אין לי מידע ודאי." });
@@ -579,9 +645,10 @@
     (D.ahuzot || []).forEach(function(L){
       var d = distPt(center, [L[0], L[1]]); if(d > 700) return;
       var dup = out.filter(function(o){ return o.name === L[2] || distPt([L[0], L[1]], o.at) < 60; })[0];
-      if(dup){ if(!dup.rate) dup.rate = L[4]; return; }
+      var lv = LIVE.lots && LIVE.lots[L[2]];
+      if(dup){ if(!dup.rate) dup.rate = L[4]; if(lv) dup.live = lv; return; }
       seen[L[2]] = true;
-      out.push({ d:d, at:[L[0], L[1]], name:"אחוזות החוף – " + L[2], addr:L[3], type:"", rate:L[4], note:L[6] });
+      out.push({ d:d, at:[L[0], L[1]], name:"אחוזות החוף – " + L[2], addr:L[3], type:"", rate:L[4], note:L[6], live:lv });
     });
     (D.publicLots || []).forEach(function(L){
       var d = distPt(center, [L[0], L[1]]); if(d > 400 || !L[2] || L[2] === "חניון") return;
@@ -617,8 +684,8 @@
     var s = cur.s, p = refPoint(cur), out = [], R = 60, who = cur.manual ? "מהכתובת" : "ממך";
     function dtxt(d){ return d == null ? "" : " (כ-" + Math.max(5, Math.round(d / 5) * 5) + " מ׳ " + who + ")"; }
     function dist(lat, lon){ return p ? distPt(p, [lat, lon]) : null; }
-    (s.wk || []).forEach(function(i){ var W = D.works[i];
-      out.push({ o:-1, ic:"🚧", t:"עבודות" + (W[0] ? " ב" + W[0] : "") + (W[1] ? ": " + W[1] : "") + (W[2] ? ", " + W[2] : "") + (W[6] || W[7] ? ". תאריכים: " + (W[6] || "?") + " עד " + (W[7] || "?") : "") + (W[4] && W[5] ? ", " + W[4] + "–" + W[5] : "") + "." }); });
+    var wNow = state.when || new Date(), wDay = new Date(wNow.getFullYear(), wNow.getMonth(), wNow.getDate());
+    worksOnSeg(cur, wNow).forEach(function(x){ out.push({ o:-1, ic:"🚧", t:workText(x, wDay) }); });
     if(p) s.e.forEach(function(j){ if(j < 0) return; var J = D.junctions[j], d = distPt(p, [J[0], J[1]]);
       if(d <= 25) out.push({ o:d, ic:"✖️", t:"צומת עם " + crossName(j, cur.name) + dtxt(d) + ". אסור לחנות פחות מ-12 מ׳ מהצומת." }); });
     (s.bs || []).forEach(function(i){ var S = D.stops[i], d = dist(S[0], S[1]); if(d != null && d > R) return;
@@ -819,8 +886,9 @@
       if(lots.length){
         more += '<div class="sec"><div class="sec-h">חניונים קרובים</div><ul class="facts">' + lots.map(function(L){
           return '<li><span class="ic">🅿️</span><span><b>' + esc(L.name) + '</b>' + (L.addr ? ", " + esc(L.addr) : "") + ' <span class="muted">(כ-' + Math.round(L.d / 10) * 10 + ' מ׳)</span>' +
+            (L.live ? '<br><b>תפוסה עכשיו: ' + esc(L.live.st) + '</b>' + (L.live.at ? ' <span class="muted">(עודכן ' + hhmm(L.live.at) + ')</span>' : '') : '') +
             (L.type ? '<br><span class="muted">' + esc(L.type) + '</span>' : '') + (L.rate ? '<br>' + esc(L.rate) : '') + (L.note ? '<br><span class="muted">' + esc(L.note) + '</span>' : '') + '</span></li>';
-        }).join("") + '</ul><div class="muted" style="margin-top:6px">מצב התפוסה לא מוצג, כי האפליקציה עובדת עם עותק של הנתונים ולא עם נתונים חיים.</div></div>';
+        }).join("") + '</ul><div class="muted" style="margin-top:6px">' + (LIVE.lots ? 'מצב התפוסה בחניוני אחוזות החוף מגיע מהעירייה בזמן אמת. לשאר החניונים אין מידע על תפוסה.' : 'מצב התפוסה לא זמין כרגע.') + '</div></div>';
       }
     }
     more += '<div class="sec"><div class="lists">' +
@@ -839,7 +907,7 @@
           return '<div class="u-row"><span><b>' + esc(u.name) + '</b><br><span class="muted">' + esc(u.eff) + '</span></span><span class="u-when">' + esc(when) + '</span></div>';
         }).join("") + '</div></div>';
     }
-    more += '<div class="stamp">הכללים נבדקו לאחרונה: ' + RULES_CHECKED + '. נתוני המפה: עותק מ-' + esc(D ? D.checked : "?") + '. העירייה מכריזה לפעמים על חנייה חינם (בחירות, מצב חירום), והאפליקציה לא יודעת על זה.</div>';
+    more += '<div class="stamp">הכללים נבדקו לאחרונה: ' + RULES_CHECKED + '. נתוני המפה: עותק מ-' + esc(D ? D.checked : "?") + '.' + (LIVE.worksAt ? ' עבודות כביש: מהעירייה בזמן אמת, עודכן ' + hhmm(LIVE.worksAt) + '.' : ' עבודות כביש: מהעותק (לא הצלחתי לטעון נתונים חיים).') + (LIVE.lotsAt ? ' תפוסת חניונים: עודכנה ' + hhmm(LIVE.lotsAt) + '.' : '') + '  העירייה מכריזה לפעמים על חנייה חינם (בחירות, מצב חירום), והאפליקציה לא יודעת על זה.</div>';
     html += '<details class="more" id="moreInfo"' + (state.moreOpen ? ' open' : '') + '><summary>עוד מידע על הכתובת</summary>' + more + '</details>';
 
     box.innerHTML = html;
@@ -915,10 +983,16 @@
   }
 
   renderAll(); startGeo();
+  if(!IN_CLAUDE && window.fetch && window.URLSearchParams){
+    loadLiveWorks(); loadLiveLots();
+    setInterval(function(){ if(!document.hidden) loadLiveLots(); }, 3*60000);
+    setInterval(function(){ if(!document.hidden) loadLiveWorks(); }, 30*60000);
+    document.addEventListener("visibilitychange", function(){ if(!document.hidden && (!LIVE.lotsAt || new Date() - LIVE.lotsAt > 3*60000)) loadLiveLots(); });
+  }
   setInterval(function(){ if(!state.when){ renderPlace(); renderVerdict(); } }, 30000);
 
   window.__parking = { evaluate:evaluate, blueStatus:blueStatus, dayInfo:dayInfo, paySchedule:paySchedule, current:current, segFacts:segFacts,
-    nearWarnings:nearWarnings, nearbyLots:nearbyLots, state:state, cfg:function(){ return cfg; }, setCfg:function(o){ Object.assign(cfg, o); }, D:D, segLabel:segLabel, BY_STREET:BY_STREET };
+    nearWarnings:nearWarnings, nearbyLots:nearbyLots, LIVE:LIVE, worksOnSeg:worksOnSeg, restrictions:restrictions, state:state, cfg:function(){ return cfg; }, setCfg:function(o){ Object.assign(cfg, o); }, D:D, segLabel:segLabel, BY_STREET:BY_STREET };
 })();
 </script>
 </body>
