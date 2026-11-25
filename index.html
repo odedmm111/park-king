@@ -136,6 +136,8 @@
   .loc-line{font-size:14px;margin-top:6px}
   .restrict{margin-top:10px;border-radius:12px;padding:10px 12px;background:var(--no-bg);border:2px solid var(--no)}
   .restrict b{display:block;margin-bottom:2px}
+  .near-line{display:block;width:100%;margin-top:10px;padding:10px 12px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;text-align:start;cursor:pointer}
+  .near-line .muted{white-space:nowrap}
   .restrict .facts li{border-bottom-color:rgba(185,28,28,.15)}
   .curb-sec{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
   details.more{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
@@ -149,7 +151,7 @@
 <header>
   <div class="logo">P</div>
   <h1>חנייה עכשיו</h1>
-  <span class="tag">גרסה 4.7</span>
+  <span class="tag">גרסה 4.8</span>
 </header>
 
 <main>
@@ -684,23 +686,23 @@
     function dtxt(d){ return d == null ? "" : " (כ-" + Math.max(5, Math.round(d / 5) * 5) + " מ׳ " + who + ")"; }
     function dist(lat, lon){ return p ? distPt(p, [lat, lon]) : null; }
     var wNow = state.when || new Date(), wDay = new Date(wNow.getFullYear(), wNow.getMonth(), wNow.getDate());
-    worksOnSeg(cur, wNow).forEach(function(x){ out.push({ o:-1, ic:"🚧", t:workText(x, wDay) }); });
+    worksOnSeg(cur, wNow).forEach(function(x){ out.push({ o:-1, ic:"🚧", k:"עבודות", full:String(x.W[2] || "").trim() === "חסימה הרמטית", t:workText(x, wDay) }); });
     if(p) s.e.forEach(function(j){ if(j < 0) return; var J = D.junctions[j], d = distPt(p, [J[0], J[1]]);
-      if(d <= 25) out.push({ o:d, ic:"✖️", t:"צומת עם " + crossName(j, cur.name) + dtxt(d) + ". אסור לחנות פחות מ-12 מ׳ מהצומת." }); });
+      if(d <= 25) out.push({ o:d, ic:"✖️", k:"צומת", t:"צומת עם " + crossName(j, cur.name) + dtxt(d) + ". אסור לחנות פחות מ-12 מ׳ מהצומת." }); });
     (s.bs || []).forEach(function(i){ var S = D.stops[i], d = dist(S[0], S[1]); if(d != null && d > R) return;
-      out.push({ o:d || 0, ic:"🚌", t:"תחנת אוטובוס \"" + S[2] + "\"" + dtxt(d) + ". אסור לחנות פחות מ-20 מ׳ לפניה או אחריה." }); });
+      out.push({ o:d || 0, ic:"🚌", k:"תחנת אוטובוס", t:"תחנת אוטובוס \"" + S[2] + "\"" + dtxt(d) + ". אסור לחנות פחות מ-20 מ׳ לפניה או אחריה." }); });
     (s.ln || []).forEach(function(i){ var L = D.lines[i]; if(L[0] !== 818 && L[0] !== 820) return; var d = p ? distLine(p, L.slice(2)) : null; if(d != null && d > R) return;
-      out.push({ o:d || 0, ic:"🟥", t:(L[0] === 818 ? "אבני שפה אדום-לבן" : "שטח מסומן בלבן שאסור לחנות בו") + (L[1] ? " באורך כ-" + L[1] + " מ׳" : "") + dtxt(d) + ". " + (L[0] === 818 ? "אסורה כל עצירה או חנייה." : "אסור לחנות בתוכו.") }); });
+      out.push({ o:d || 0, ic:"🟥", k:(L[0] === 818 ? "אדום-לבן" : "שטח אסור לחנייה"), t:(L[0] === 818 ? "אבני שפה אדום-לבן" : "שטח מסומן בלבן שאסור לחנות בו") + (L[1] ? " באורך כ-" + L[1] + " מ׳" : "") + dtxt(d) + ". " + (L[0] === 818 ? "אסורה כל עצירה או חנייה." : "אסור לחנות בתוכו.") }); });
     (s.ls || []).forEach(function(i){ var S = D.signs[i], d = dist(S[0], S[1]); if(d != null && d > R) return;
-      out.push({ o:d || 0, ic:"🚚", t:"תמרור " + S[3] + dtxt(d) + ": ", q:S[2] }); });
+      out.push({ o:d || 0, ic:"🚚", k:"פריקה וטעינה", t:"תמרור " + S[3] + dtxt(d) + ": ", q:S[2] }); });
     (s.tx || []).forEach(function(i){ var T = D.taxi[i], d = dist(T[0], T[1]); if(d != null && d > R) return;
-      out.push({ o:d || 0, ic:"🚕", t:"תחנת מוניות" + (T[2] ? " \"" + T[2] + "\"" : "") + dtxt(d) + ". המקומות שמורים למוניות." }); });
+      out.push({ o:d || 0, ic:"🚕", k:"תחנת מוניות", t:"תחנת מוניות" + (T[2] ? " \"" + T[2] + "\"" : "") + dtxt(d) + ". המקומות שמורים למוניות." }); });
     (s.at || []).forEach(function(i){ var A = D.autotel[i], d = dist(A[0], A[1]); if(d != null && d > R) return;
-      out.push({ o:d || 0, ic:"🚗", t:"חניית אוטותל" + (A[3] ? ", " + A[3] + " מקומות" : "") + dtxt(d) + ". המקומות שמורים לרכבי אוטותל." }); });
+      out.push({ o:d || 0, ic:"🚗", k:"אוטותל", t:"חניית אוטותל" + (A[3] ? ", " + A[3] + " מקומות" : "") + dtxt(d) + ". המקומות שמורים לרכבי אוטותל." }); });
     (s.bl || []).forEach(function(i){ var B = D.buslanes[i], h = [];
       if(hrs(B[4],B[5])) h.push("א׳–ה׳ " + hrs(B[4],B[5])); if(hrs(B[6],B[7])) h.push("שישי וערבי חג " + hrs(B[6],B[7])); if(hrs(B[8],B[9])) h.push("שבת וחג " + hrs(B[8],B[9]));
-      out.push({ o:1e6, ic:"🟨", t:"ברחוב יש נתיב תחבורה ציבורית" + (B[1] ? " (" + B[1] + ")" : "") + (h.length ? ", פעיל " + h.join(", ") : "") + "." }); });
-    (s.pd || []).forEach(function(i){ var P = D.ped[i]; out.push({ o:1e6, ic:"🚶", t:"רחוב מוטה הולכי רגל" + (P[1] ? ": " + P[1] : "") + "." }); });
+      out.push({ o:1e6, ic:"🟨", k:"נתיב תחבורה ציבורית", t:"ברחוב יש נתיב תחבורה ציבורית" + (B[1] ? " (" + B[1] + ")" : "") + (h.length ? ", פעיל " + h.join(", ") : "") + "." }); });
+    (s.pd || []).forEach(function(i){ var P = D.ped[i]; out.push({ o:1e6, ic:"🚶", k:"רחוב מוטה הולכי רגל", t:"רחוב מוטה הולכי רגל" + (P[1] ? ": " + P[1] : "") + "." }); });
     out.sort(function(a, b){ return a.o - b.o; });
     return out;
   }
@@ -709,7 +711,7 @@
     var cur = current();
     if(curb === "redwhite") return { level:"no", badge:"אסור", title:"אסור לחנות כאן", sub:"אבן שפה אדום-לבן: אסור לעצור ואסור לחנות, בכל שעות היממה." };
     if(curb === "redyellow") return { level:"no", badge:"אסור לרכב פרטי", title:"אסור לעצור כאן", sub:"אבן שפה אדום-צהוב: אסור לעצור. מותר רק לסוג הרכב שמופיע בתמרור (למשל אוטובוס), ורק להעלאה והורדה של נוסעים." };
-    if(curb === "none") return { level:"ok", badge:"אין איסור מהסימון", title:"הסימון לא אוסר לחנות", sub:"אבן שפה לא צבועה לא אוסרת חנייה. אם יש תמרור במקום, הוא קובע. בדוק גם שאתה לא באחד המקומות האסורים (ברשימה למעלה).", warn:nearWarnings() };
+    if(curb === "none") return { level:"ok", badge:"אין איסור מהסימון", title:"הסימון לא אוסר לחנות", sub:"אבן שפה לא צבועה לא אוסרת חנייה. אם יש תמרור במקום, הוא קובע. בדוק גם שאתה לא באחד המקומות האסורים (ב'עוד מידע', ברשימת 'אסור').", warn:nearWarnings() };
     if(!cur){
       var s = paySchedule(now, "9"), s2 = paySchedule(now, "1");
       return { level:"unk", badge:"אין מידע ודאי", title:"אין לי מידע ודאי על המקום הזה",
@@ -856,9 +858,17 @@
       html += '<div class="status ' + st.level + '"><div class="s-label">בכחול-לבן כאן, עבורך, עכשיו</div><div class="s-main">' + esc(st.main) + '</div>' +
               (chLine ? '<div class="s-sub">' + chLine + '</div>' : '') + '</div>';
       (st.warn || []).filter(Boolean).forEach(function(w){ html += '<div class="warn">⚠️ ' + esc(w) + '</div>'; });
-      var rs = restrictions(cur);
-      if(rs.length) html += '<div class="restrict"><b>⛔ ' + (cur.manual ? 'ליד הכתובת' : 'לידך') + ' יש מה שאוסר או מגביל חנייה</b><ul class="facts">' +
-        rs.map(function(f){ return '<li><span class="ic">' + f.ic + '</span><span>' + esc(f.t) + (f.q ? '<q>' + esc(f.q) + '</q>' : '') + '</span></li>'; }).join("") + '</ul></div>';
+      var rs = restrictions(cur), rsFull = rs.filter(function(f){ return f.full; }), rsNear = rs.filter(function(f){ return !f.full; });
+      // אדום רק כשעבודות חוסמות את הרחוב לגמרי ביום הנבחר
+      if(rsFull.length) html += '<div class="restrict"><b>⛔ ' + (cur.manual ? 'ליד הכתובת' : 'לידך') + ' יש עבודות עם חסימה הרמטית</b><ul class="facts">' +
+        rsFull.map(function(f){ return '<li><span class="ic">' + f.ic + '</span><span>' + esc(f.t) + '</span></li>'; }).join("") + '</ul></div>';
+      // כל השאר: שורה אפורה אחת, ולחיצה פותחת את "עוד מידע"
+      if(rsNear.length){
+        var seenK = {}, parts = [];
+        rsNear.forEach(function(f){ if(seenK[f.k]) return; seenK[f.k] = true;
+          parts.push(esc(f.k) + (f.o > 0 && f.o < 1e6 ? ' <span class="muted">(כ-' + Math.max(5, Math.round(f.o / 5) * 5) + ' מ׳)</span>' : '')); });
+        html += '<button type="button" class="near-line" id="nearLine">' + (cur.manual ? 'ליד הכתובת' : 'לידך') + ': ' + parts.join(' · ') + '. <span class="muted">פרטים ב"עוד מידע" ›</span></button>';
+      }
 
       if(cur.zone){
         var pr = profile(cur.zone), z = cur.zone, center = isCenter(z);
@@ -911,6 +921,7 @@
 
     box.innerHTML = html;
     el("moreInfo").addEventListener("toggle", function(){ state.moreOpen = el("moreInfo").open; });
+    var nl = el("nearLine"); if(nl) nl.onclick = function(){ var m = el("moreInfo"); m.open = true; state.moreOpen = true; m.scrollIntoView({ behavior:"smooth", block:"start" }); };
     Array.prototype.forEach.call(box.querySelectorAll(".curb"), function(b){
       b.addEventListener("click", function(){
         state.curb = b.getAttribute("data-curb");
