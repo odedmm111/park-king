@@ -686,7 +686,8 @@
     function dtxt(d){ return d == null ? "" : " (כ-" + Math.max(5, Math.round(d / 5) * 5) + " מ׳ " + who + ")"; }
     function dist(lat, lon){ return p ? distPt(p, [lat, lon]) : null; }
     var wNow = state.when || new Date(), wDay = new Date(wNow.getFullYear(), wNow.getMonth(), wNow.getDate());
-    worksOnSeg(cur, wNow).forEach(function(x){ out.push({ o:-1, ic:"🚧", k:"עבודות", full:String(x.W[2] || "").trim() === "חסימה הרמטית", t:workText(x, wDay) }); });
+    worksOnSeg(cur, wNow).forEach(function(x){ var started = !x.from || x.from <= wDay;
+      out.push({ o:-1, ic:"🚧", k:started ? "עבודות" : "עבודות שמתחילות בקרוב", full:started && String(x.W[2] || "").trim() === "חסימה הרמטית", t:workText(x, wDay) }); });
     if(p) s.e.forEach(function(j){ if(j < 0) return; var J = D.junctions[j], d = distPt(p, [J[0], J[1]]);
       if(d <= 25) out.push({ o:d, ic:"✖️", k:"צומת", t:"צומת עם " + crossName(j, cur.name) + dtxt(d) + ". אסור לחנות פחות מ-12 מ׳ מהצומת." }); });
     (s.bs || []).forEach(function(i){ var S = D.stops[i], d = dist(S[0], S[1]); if(d != null && d > R) return;
