@@ -138,6 +138,9 @@
   .restrict b{display:block;margin-bottom:2px}
   .near-line{display:block;width:100%;margin-top:10px;padding:10px 12px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;text-align:start;cursor:pointer}
   .near-line .muted{white-space:nowrap}
+  .report{margin-top:16px}
+  .report-btn{display:flex;align-items:center;justify-content:center;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-weight:600;text-decoration:none}
+  .report .muted{margin-top:6px}
   .restrict .facts li{border-bottom-color:rgba(185,28,28,.15)}
   .curb-sec{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
   details.more{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
@@ -151,7 +154,7 @@
 <header>
   <div class="logo">P</div>
   <h1 dir="ltr">PARK-KING</h1>
-  <span class="tag">גרסה 4.10</span>
+  <span class="tag">גרסה 4.11</span>
 </header>
 
 <main>
@@ -237,7 +240,7 @@
       <li><b>נתונים חיים ועותק:</b> עבודות הכבישים ומצב התפוסה בחניוני אחוזות החוף מגיעים מהעירייה בזמן אמת. שאר הנתונים (אזורים, רחובות, צמתים, תחנות, תמרורי פריקה וטעינה ועוד) הם עותק מ-15.11.2026, והכתובות מ-17.11.2026, ולכן ייתכן שהשתנו מאז. אם השרת של העירייה לא עונה, או בגרסה שבתוך claude.ai, גם העבודות מוצגות מהעותק, ומצב התפוסה לא מוצג. דיווחי ווייז לא מוצגים, כי הם לא מידע מאומת של העירייה.</li>
       <li><b>שבת וחג:</b> החוברת הרשמית קובעת שעות תשלום רק לימים א׳–ה׳ ולשישי וערבי חג. מכאן שבשבת ובחג אין תשלום.</li>
       <li><b>אין מידע ודאי:</b> חול המועד, יום הזיכרון ויום העצמאות. בימים האלה האפליקציה לא נותנת תשובה על תשלום, ומפנה לתמרור.</li>
-      <li><b>פרטיות:</b> המיקום וההגדרות שלך נשארים בטלפון. האפליקציה לא שולחת אותם לשום שרת, ולא אוספת מידע על המשתמשים.</li>
+      <li><b>פרטיות:</b> המיקום וההגדרות שלך נשארים בטלפון. האפליקציה לא שולחת אותם לשום שרת, ולא אוספת מידע על המשתמשים. אם תבחר לדווח על טעות, ייפתח מייל עם הכתובת (בלי קואורדינטות) ומה שהאפליקציה הציגה, והוא נשלח רק אם תלחץ "שלח".</li>
       <li><b>הכלל באפליקציה:</b> כשאין מקור ודאי, האפליקציה כותבת "אין לי מידע ודאי" ולא מנחשת.</li>
       <li><b>הודעות מיוחדות:</b> העירייה מכריזה לפעמים על חנייה חינם בכחול-לבן (למשל ביום בחירות או במצב חירום). האפליקציה לא יודעת על הודעות כאלה.</li>
     </ol>
@@ -829,6 +832,27 @@
     ["redwhite", "s-redwhite", "אדום-לבן", "איסור עצירה וחנייה"],
     ["redyellow", "s-redyellow", "אדום-צהוב", "עצירה לרכב מסוים בלבד"]
   ];
+  // דיווח על מידע לא נכון: פותח מייל מוכן. נשלח רק אם המשתמש לוחץ "שלח".
+  var REPORT_TO = "odedmm111@gmail.com";
+  function reportHref(){
+    var cur = current(), now = state.when || new Date(), L = [], ver = (document.querySelector(".tag") || {}).textContent || "";
+    var place = cur ? (cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name + " (לפי GPS)") : "";
+    L.push("מה לא נכון? (כתוב כאן)", "", "", "מה כתוב על התמרור, או מה רואים בשטח:", "", "", "---- פרטים שהאפליקציה הוסיפה ----");
+    if(cur){
+      L.push("כתובת: " + place);
+      L.push("קטע: " + cur.name + " " + segLabel(cur.i));
+      L.push("אזור חנייה: " + (cur.zone || "מחוץ לאזורי החנייה"));
+      try { L.push("מה האפליקציה הציגה: " + blueStatus(now, cur).main); } catch(e){}
+    } else L.push("לא נבחרה כתובת");
+    if(state.curb){ var c = CURBS.filter(function(x){ return x[0] === state.curb; })[0]; try { L.push("אבן שפה שנבחרה: " + (c ? c[2] : state.curb) + " – " + evaluate(now, state.curb).title); } catch(e){} }
+    L.push("זמן שנבדק: " + now.toLocaleString("he-IL") + (state.when ? " (נבחר ידנית)" : ""), ver);
+    return "mailto:" + REPORT_TO + "?subject=" + encodeURIComponent("PARK-KING – מידע לא נכון" + (place ? ": " + place : "")) + "&body=" + encodeURIComponent(L.join("\r\n"));
+  }
+  function reportHtml(){
+    return '<div class="report"><a id="reportLink" class="report-btn" href="mailto:' + REPORT_TO + '">המידע כאן לא נכון? דווח על טעות</a>' +
+      '<div class="muted">ייפתח מייל מוכן עם הכתובת ומה שהאפליקציה הציגה. הוא נשלח רק אם תלחץ "שלח". אפשר גם לכתוב ישירות ל-<span dir="ltr">' + REPORT_TO + '</span>.</div></div>';
+  }
+
   function curbHtml(){
     return '<div class="sec curb-sec"><div class="sec-h" style="font-size:15px;color:var(--ink)">מה צבע אבן השפה איפה שעצרת?</div><div class="curbs">' +
       CURBS.map(function(c){ return '<button class="curb" data-curb="' + c[0] + '" aria-pressed="' + (state.curb === c[0] ? "true" : "false") + '"><div class="stripe ' + c[1] + '"></div><b>' + c[2] + '</b><span>' + c[3] + '</span></button>'; }).join("") +
@@ -885,6 +909,8 @@
     // 3. צבע אבן השפה, ומתחתיו התשובה המדויקת
     html += curbHtml();
 
+    html += reportHtml();
+
     // 4. עוד מידע, סגור כברירת מחדל
     if(cur){
       more += '<div class="muted" style="margin-top:8px">הכתובת נמצאת בקטע ' + esc(cur.name) + ' ' + esc(segLabel(cur.i)) + ' (' + cur.s.len + ' מ׳).</div>';
@@ -922,6 +948,7 @@
 
     box.innerHTML = html;
     el("moreInfo").addEventListener("toggle", function(){ state.moreOpen = el("moreInfo").open; });
+    var rl = el("reportLink"); if(rl) rl.onclick = function(){ rl.href = reportHref(); };
     var nl = el("nearLine"); if(nl) nl.onclick = function(){ var m = el("moreInfo"); m.open = true; state.moreOpen = true; m.scrollIntoView({ behavior:"smooth", block:"start" }); };
     Array.prototype.forEach.call(box.querySelectorAll(".curb"), function(b){
       b.addEventListener("click", function(){
