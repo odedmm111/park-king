@@ -116,6 +116,16 @@
   ol.sources{margin:6px 0 0;padding-inline-start:20px;font-size:13px}
   ol.sources li{margin-bottom:6px}
   ol.sources a{color:var(--accent);word-break:break-word}
+  [hidden]{display:none!important}
+  .collect{border:2px dashed #7c3aed;background:#faf5ff}
+  .collect textarea{font:inherit;padding:8px;border-radius:10px;border:1px solid var(--line)}
+  .collect h2{color:#6d28d9}
+  .opts{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .opts label{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;font-size:14px}
+  .opts input{margin-top:3px}
+  .c-photo{max-width:100%;max-height:220px;border-radius:10px;margin-top:8px;display:block}
+  .c-msg{margin-top:10px;padding:9px 11px;border-radius:10px;font-size:14px;font-weight:500}
+  .c-msg.ok{background:var(--ok-bg)} .c-msg.err{background:var(--no-bg)}
   .disclaimer{font-size:12px;color:var(--muted);text-align:center;margin:4px 8px}
 </style>
 </head>
@@ -159,7 +169,7 @@
 <header>
   <div class="logo">P</div>
   <h1 dir="ltr">PARK-KING</h1>
-  <span class="tag">גרסה 4.15</span>
+  <span class="tag">גרסה 4.16</span>
 </header>
 
 <main>
@@ -176,6 +186,9 @@
 
   <!-- 1. מה ידוע על המקום -->
   <section class="card" id="place" aria-live="polite"></section>
+
+  <!-- 2. מצב איסוף נתונים (רק עם קישור סודי) -->
+  <section class="card collect" id="collect" hidden></section>
 
   <!-- 3. בדיקה לשעה אחרת -->
   <section class="card">
@@ -225,7 +238,7 @@
     <ol class="sources">
       <li>תקנות התעבורה, התשכ"א-1961, תקנה 72: מקומות שאסור לעצור ולחנות בהם.<br><a href="https://judgments.org.il/laws/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA-%D7%94%D7%AA%D7%A2%D7%91%D7%95%D7%A8%D7%94-%D7%94%D7%AA%D7%A9%D7%9B%D7%90-1961/" target="_blank" rel="noopener">נוסח התקנות</a></li>
       <li>לוח התמרורים (תשע"א-2010, נוסח משולב 2020): 817 כחול-לבן, 818 אדום-לבן, 820 שטח אסור לחנייה מסומן בלבן, 439 תמרור מסר מחייב.<br><a href="https://www.nevo.co.il/law_html/law01/500_427.htm" target="_blank" rel="noopener">לוח התמרורים</a> · <a href="https://meyda.education.gov.il/files/zahav/ALYesodi/luach-tamrurim-2021.pdf" target="_blank" rel="noopener">נוסח משולב (PDF)</a></li>
-      <li>עיריית תל אביב-יפו, הסדרי החניה 2025: אזורים, שעות תשלום (א׳–ה׳, שישי וערבי חג), תו חנייה, חנייה מועדפת ומוסדרת.<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת העירייה (PDF)</a></li>
+      <li>עיריית תל אביב-יפו, הסדרי החניה 2025: אזורים, שעות תשלום (א׳–ה׳, שישי וערבי חג), תו חנייה, חנייה עם תו ובלי תו.<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת העירייה (PDF)</a></li>
       <li>רחובות גובלים בין אזורים: "חניה ברחובות הגובלים בין אזורי חניה... תהיה ללא תשלום עבור בעלי תו מאחד האזורים הגובלים בשני צידי הרחוב". 138 קטעים זוהו כגובלים לפי מפת אזורי החנייה של העירייה (שכבה 544) והכתובות (שכבה 527).<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת הסדרי החנייה 2025</a></li>
       <li>עיריית תל אביב-יפו, מדיניות חנייה: 9 אזורים בתוקף.<br><a href="https://www.tel-aviv.gov.il/Residents/Transportation/Pages/parkingpolicy.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
       <li>אפליקציות התשלום: עיריית תל אביב-יפו מציינת את פנגו, סלו ואיזיפארק. הכפתורים מובילים לדפי האפליקציות הרשמיים ב-App Store וב-Google Play.<br><a href="https://www.tel-aviv.gov.il/About/Pages/transportation.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
@@ -1056,7 +1069,7 @@
     el("myZoneField").style.display = cfg.permit === "tlv" ? "" : "none";
     el("remindMin").value = String(cfg.remindMin || "15");
   }
-  function renderAll(){ renderWhere(); renderPlace(); renderVerdict(); renderWhen(); renderSettings(); }
+  function renderAll(){ renderWhere(); renderPlace(); renderVerdict(); renderWhen(); renderSettings(); if(typeof renderCollect === "function") renderCollect(); }
 
   /* =================== אירועים =================== */
   ["permit","myZone"].forEach(function(f){ el(f).addEventListener("change", function(){ cfg[f] = el(f).value; save(); renderAll(); }); });
@@ -1084,7 +1097,175 @@
     } catch(e){ state.geoError = BLOCKED; renderAll(); }
   }
 
+  /* =================== מצב איסוף נתונים (רק למי שקיבל קישור סודי) =================== */
+  // הקוד עצמו לא נמצא בקוד המקור, רק הגיבוב שלו (SHA-256). מי שאין לו את הקישור לא רואה את המצב הזה.
+  var COLLECT_HASH = "0151e6ccbd11832d91aa964b48c0270e79654a636276d7637faca3555105df34";
+  var CKEY = "parkking-collect";
+  var COL = { on:false, seg:null, side:"", type:"", start:"", end:"", allDay:false, limit:"0", note:"", file:null, url:null, msg:null, built:false };
+  function colLoad(){ try { return JSON.parse(localStorage.getItem(CKEY) || "null") || {}; } catch(e){ return {}; } }
+  function colSave(o){ try { localStorage.setItem(CKEY, JSON.stringify(o)); } catch(e){} }
+  function sha256hex(str){
+    if(!window.crypto || !crypto.subtle || !window.TextEncoder) return Promise.resolve("");
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function(buf){
+      return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ("0" + b.toString(16)).slice(-2); }).join("");
+    }).catch(function(){ return ""; });
+  }
+  function colActivate(code, fromLink){
+    return sha256hex(code).then(function(h){
+      if(h !== COLLECT_HASH) return false;
+      var o = colLoad(); o.code = code; colSave(o);
+      COL.on = true; renderCollect();
+      if(fromLink){ var c = el("collect"); if(c && c.scrollIntoView) c.scrollIntoView({ behavior:"smooth", block:"start" }); }
+      return true;
+    });
+  }
+  function colFromLink(){
+    var m = /(?:^#|[#&])collect=([^&]+)/.exec(location.hash || "");
+    if(!m) return;
+    var code = decodeURIComponent(m[1]);
+    try { history.replaceState(null, "", location.pathname + location.search); } catch(e){}   // הקוד לא נשאר בשורת הכתובת
+    colActivate(code, true);
+  }
+  var COL_TYPES = {
+    permit:   { name:"חניה עם תו", hint:"בכחול-לבן כאן מותר לחנות רק לבעלי תו של האזור (בכל היום או בשעות מסוימות)" },
+    nopermit: { name:"חניה בלי תו", hint:"הכחול-לבן כאן פתוח לכולם (בתשלום בשעות התשלום)" },
+    none:     { name:"אין כאן כחול-לבן", hint:"בצד הזה אין סימון כחול-לבן" }
+  };
+  var COL_SIDE = { odd:"צד המספרים האי-זוגיים", even:"צד המספרים הזוגיים", all:"שני צידי הרחוב (אותו דבר בשניהם)" };
+  function colRecord(){
+    var cur = current(); if(!cur) return null;
+    var r = { v:1, seg:cur.i, k:cur.k, street:cur.name, part:segLabel(cur.i), addr:(cur.manual && cfg.addr) || null,
+      gps: (!cur.manual && state.pos) ? [Math.round(state.pos[0] * 1e5) / 1e5, Math.round(state.pos[1] * 1e5) / 1e5] : null,
+      zone:cur.zone || null, side:COL.side, type:COL.type, by:(colLoad().name || ""), photo:!!COL.file, data:D ? D.checked : null };
+    if(COL.type === "permit"){ r.allDay = !!COL.allDay; r.start = COL.allDay ? "" : COL.start; r.end = COL.allDay ? "" : COL.end; }
+    if(COL.type !== "none") r.limit = +COL.limit || 0;
+    if(COL.note.trim()) r.note = COL.note.trim();
+    var d = new Date(); r.at = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    return r;
+  }
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+  function colProblem(){
+    var cur = current();
+    if(!cur) return "קודם בחר רחוב ומספר בית למעלה, או אשר גישה למיקום.";
+    if(!COL.side) return "בחר באיזה צד של הרחוב המידע.";
+    if(!COL.type) return "בחר אם זו חניה עם תו או בלי תו.";
+    if(COL.type === "permit" && !COL.allDay && (!COL.start || !COL.end)) return "כתוב באילו שעות מותר לחנות רק עם תו, או סמן \"כל היממה\".";
+    return null;
+  }
+  function colText(r){
+    var L = ["PARK-KING – מידע על כחול-לבן", "",
+      "רחוב: " + r.street + (r.addr ? " (" + r.addr + ")" : "") + ", " + r.part,
+      "אזור: " + (r.zone || "לא ידוע"), "צד: " + COL_SIDE[r.side], "סוג: " + COL_TYPES[r.type].name];
+    if(r.type === "permit") L.push("שעות שרק עם תו: " + (r.allDay ? "כל היממה" : r.start + "–" + r.end));
+    if(r.type !== "none") L.push("הגבלת זמן: " + (r.limit ? (r.limit / 60) + " שעות" : "אין"));
+    if(r.note) L.push("הערות: " + r.note);
+    L.push("תמונה: " + (r.photo ? "מצורפת" : "אין"), "נאסף על ידי: " + (r.by || "לא צוין") + ", " + r.at, "", "PARKKING-DATA:" + JSON.stringify(r));
+    return L.join("\n");
+  }
+  function colMsg(kind, text){ COL.msg = { kind:kind, text:text }; var m = el("cMsg"); if(m){ m.className = "c-msg " + kind; m.textContent = text; m.hidden = false; } }
+  function colSent(){
+    var o = colLoad(); o.sent = (o.sent || 0) + 1; colSave(o);
+    COL.note = ""; COL.file = null; if(COL.url){ try { URL.revokeObjectURL(COL.url); } catch(e){} COL.url = null; }
+    COL.built = false; renderCollect();
+    colMsg("ok", "נשלח. תודה! המידע יגיע לאישור לפני שייכנס לאפליקציה.");
+  }
+  function colSend(){
+    var p = colProblem(); if(p){ colMsg("err", p); return; }
+    var r = colRecord(), text = colText(r), title = "PARK-KING – " + r.street + (r.addr ? " " + r.addr : "");
+    var files = COL.file ? [COL.file] : null;
+    var canFiles = files && navigator.canShare && navigator.share && navigator.canShare({ files:files });
+    if(canFiles || (!files && navigator.share)){
+      navigator.share(canFiles ? { files:files, title:title, text:text } : { title:title, text:text }).then(colSent, function(e){
+        colMsg("err", e && e.name === "AbortError" ? "השליחה בוטלה. אפשר לנסות שוב." : "השליחה לא הצליחה. נסה שוב, או לחץ \"העתק את הנתונים\" ושלח ידנית עם התמונה.");
+      });
+      return;
+    }
+    // בלי שיתוף קבצים (למשל פיירפוקס או מחשב): מייל מוכן, והתמונה מצורפת ידנית
+    location.href = "mailto:" + REPORT_TO + "?subject=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(text.replace(/\n/g, "\r\n"));
+    var o = colLoad(); o.sent = (o.sent || 0) + 1; colSave(o);
+    colMsg("ok", files ? "נפתח מייל מוכן. הדפדפן הזה לא יכול לצרף את התמונה לבד: צרף אותה ידנית לפני השליחה." : "נפתח מייל מוכן. הוא נשלח רק אם תלחץ \"שלח\" במייל.");
+  }
+  function colCopy(){
+    var p = colProblem(); if(p){ colMsg("err", p); return; }
+    var text = colText(colRecord());
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ colMsg("ok", "הנתונים הועתקו. אפשר להדביק אותם בהודעה יחד עם התמונה."); },
+        function(){ colMsg("err", "לא הצלחתי להעתיק בדפדפן הזה."); });
+    } else colMsg("err", "לא הצלחתי להעתיק בדפדפן הזה.");
+  }
+  function colBuild(box){
+    var o = colLoad(), opt = function(name, val, label, hint, on){
+      return '<label><input type="radio" name="' + name + '" value="' + val + '"' + (on ? " checked" : "") + '><span><b>' + esc(label) + '</b>' + (hint ? '<br><span class="muted">' + esc(hint) + '</span>' : '') + '</span></label>';
+    };
+    box.innerHTML = '<h2>📋 מצב איסוף נתונים</h2>' +
+      '<div class="muted">המצב הזה מופיע רק למי שקיבל את הקישור. המידע שאתה שולח מגיע לבדיקה ולאישור, ורק אחר כך נכנס לאפליקציה.</div>' +
+      '<div class="field"><label>איפה</label><div id="cLoc"></div></div>' +
+      '<div class="field"><label for="cName">השם שלך</label><input id="cName" maxlength="40" value="' + esc(o.name || "") + '" placeholder="כדי לדעת מי אסף"></div>' +
+      '<div class="field"><label>באיזה צד של הרחוב</label><div class="opts" id="cSide"></div></div>' +
+      '<div class="field"><label for="cPhoto">צילום של התמרור</label><input type="file" id="cPhoto" accept="image/*" capture="environment">' +
+        '<small>מומלץ מאוד: התמונה היא המקור שמאשר את המידע.</small><img id="cPrev" class="c-photo" alt="התמונה שצילמת"' + (COL.url ? ' src="' + COL.url + '"' : ' hidden') + '></div>' +
+      '<div class="field"><label>מה כתוב בתמרור</label><div class="opts" id="cType">' +
+        ["permit","nopermit","none"].map(function(t){ return opt("cType", t, COL_TYPES[t].name, COL_TYPES[t].hint, COL.type === t); }).join("") + '</div></div>' +
+      '<div class="field" id="cHoursF"><label>באילו שעות רק עם תו</label>' +
+        '<div class="pair"><input type="time" id="cStart" value="' + esc(COL.start) + '" aria-label="משעה"><span>עד</span><input type="time" id="cEnd" value="' + esc(COL.end) + '" aria-label="עד שעה"></div>' +
+        '<label style="font-weight:400"><input type="checkbox" id="cAllDay"' + (COL.allDay ? " checked" : "") + '> כל היממה</label>' +
+        '<small>אם בתמרור יש ימים שונים (למשל שישי), כתוב את זה בהערות.</small></div>' +
+      '<div class="field" id="cLimitF"><label for="cLimit">הגבלת זמן חנייה</label><select id="cLimit">' +
+        [["0","אין הגבלה"],["60","שעה"],["120","שעתיים"],["180","3 שעות"],["240","4 שעות"]].map(function(x){ return '<option value="' + x[0] + '"' + (COL.limit === x[0] ? " selected" : "") + '>' + x[1] + '</option>'; }).join("") + '</select></div>' +
+      '<div class="field"><label for="cNote">הערות</label><textarea id="cNote" rows="2" maxlength="500" placeholder="למשל: בשישי עד 14:00">' + esc(COL.note) + '</textarea></div>' +
+      '<div class="row"><button class="btn primary" id="cSend">שלח</button><button class="btn" id="cCopy">העתק את הנתונים</button></div>' +
+      '<div class="c-msg" id="cMsg" hidden></div>' +
+      '<div class="muted" id="cCount" style="margin-top:8px"></div>' +
+      '<div class="row"><button class="btn small" id="cExit">צא ממצב איסוף</button></div>';
+    el("cName").addEventListener("input", function(){ var x = colLoad(); x.name = el("cName").value.trim(); colSave(x); });
+    el("cPhoto").addEventListener("change", function(){
+      var f = el("cPhoto").files && el("cPhoto").files[0]; if(!f) return;
+      COL.file = f; if(COL.url){ try { URL.revokeObjectURL(COL.url); } catch(e){} }
+      COL.url = URL.createObjectURL(f); var im = el("cPrev"); im.src = COL.url; im.hidden = false;
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('input[name="cType"]'), function(b){ b.addEventListener("change", function(){ COL.type = b.value; colShowFields(); }); });
+    el("cStart").addEventListener("input", function(){ COL.start = el("cStart").value; });
+    el("cEnd").addEventListener("input", function(){ COL.end = el("cEnd").value; });
+    el("cAllDay").addEventListener("change", function(){ COL.allDay = el("cAllDay").checked; colShowFields(); });
+    el("cLimit").addEventListener("change", function(){ COL.limit = el("cLimit").value; });
+    el("cNote").addEventListener("input", function(){ COL.note = el("cNote").value; });
+    el("cSend").onclick = colSend;
+    el("cCopy").onclick = colCopy;
+    el("cExit").onclick = function(){ var x = colLoad(); delete x.code; colSave(x); COL.on = false; COL.built = false; renderCollect(); };
+    COL.built = true; COL.seg = undefined;
+  }
+  function colShowFields(){
+    el("cHoursF").hidden = COL.type !== "permit";
+    el("cStart").disabled = el("cEnd").disabled = COL.allDay;
+    el("cLimitF").hidden = !COL.type || COL.type === "none";
+  }
+  function renderCollect(){
+    var box = el("collect"); if(!box) return;
+    if(!COL.on){ box.hidden = true; box.innerHTML = ""; COL.built = false; return; }
+    box.hidden = false;
+    if(!COL.built) colBuild(box);
+    var cur = current(), key = cur ? cur.i + "|" + (cur.side || "") + "|" + (cur.manual ? cfg.addr : "gps") : null;
+    el("cLoc").innerHTML = cur ? '<b>' + esc(cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name + " (לפי GPS)") + '</b><br><span class="muted">' + esc(segLabel(cur.i)) + (cur.zone ? ", אזור " + esc(cur.zone) : "") + '</span>'
+      : '<span class="muted">עוד לא נבחר מקום. בחר רחוב ומספר בית למעלה, או אשר גישה למיקום.</span>';
+    if(key !== COL.seg){
+      COL.seg = key;
+      COL.side = cur && cur.side ? cur.side : "";   // לפי מספר הבית, אם יש
+      el("cSide").innerHTML = ["odd","even","all"].map(function(sd){
+        var ex = cur && sd !== "all" ? sideExamples(cur, sd) : [];
+        return '<label><input type="radio" name="cSide" value="' + sd + '"' + (COL.side === sd ? " checked" : "") + '><span>' + esc(COL_SIDE[sd]) +
+          (ex.length ? ' <span class="muted">(למשל ' + esc(ex.join(", ")) + ')</span>' : '') + '</span></label>';
+      }).join("");
+      Array.prototype.forEach.call(el("cSide").querySelectorAll("input"), function(b){ b.addEventListener("change", function(){ COL.side = b.value; }); });
+    }
+    var n = colLoad().sent || 0;
+    el("cCount").textContent = n ? "נשלחו מהמכשיר הזה: " + n : "";
+    colShowFields();
+    if(COL.msg){ var m = el("cMsg"); m.className = "c-msg " + COL.msg.kind; m.textContent = COL.msg.text; m.hidden = false; }
+  }
+
   renderAll(); startGeo();
+  window.addEventListener("hashchange", colFromLink); colFromLink();
+  (function(){ var c = colLoad().code; if(c) colActivate(c, false); })();
   if(!IN_CLAUDE && window.fetch && window.URLSearchParams){
     loadLiveWorks(); loadLiveLots();
     setInterval(function(){ if(!document.hidden) loadLiveLots(); }, 3*60000);
@@ -1093,7 +1274,7 @@
   }
   setInterval(function(){ if(!state.when){ renderPlace(); renderVerdict(); } }, 30000);
 
-  window.__parking = { renderAll:function(){ renderAll(); }, evaluate:evaluate, blueStatus:blueStatus, dayInfo:dayInfo, paySchedule:paySchedule, current:current, segFacts:segFacts,
+  window.__parking = { renderAll:function(){ renderAll(); }, collect:{ COL:COL, record:colRecord, text:colText, problem:colProblem, activate:colActivate }, evaluate:evaluate, blueStatus:blueStatus, dayInfo:dayInfo, paySchedule:paySchedule, current:current, segFacts:segFacts,
     nearWarnings:nearWarnings, nearbyLots:nearbyLots, LIVE:LIVE, worksOnSeg:worksOnSeg, restrictions:restrictions, state:state, cfg:function(){ return cfg; }, setCfg:function(o){ Object.assign(cfg, o); }, D:D, segLabel:segLabel, BY_STREET:BY_STREET };
 })();
 </script>
