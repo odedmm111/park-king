@@ -159,7 +159,7 @@
 <header>
   <div class="logo">P</div>
   <h1 dir="ltr">PARK-KING</h1>
-  <span class="tag">גרסה 4.13</span>
+  <span class="tag">גרסה 4.14</span>
 </header>
 
 <main>
@@ -241,7 +241,7 @@
     <div class="set-title">תזכורות</div>
     <div class="field">
       <label for="remindMin">להזכיר לי לפני שהמצב משתנה</label>
-      <select id="remindMin"><option value="5">5 דקות לפני</option><option value="15">15 דקות לפני</option><option value="30">30 דקות לפני</option></select>
+      <select id="remindMin"><option value="5">5 דקות לפני</option><option value="15">15 דקות לפני</option><option value="30">30 דקות לפני</option><option value="15,30">פעמיים: 30 דקות ו-15 דקות לפני</option></select>
       <small>התזכורת נכנסת ליומן של הטלפון עם התראה, גם כשהאפליקציה סגורה.</small>
     </div>
 
@@ -305,7 +305,7 @@
       '<div class="muted" style="margin-top:6px">הכפתור פותח את דף האפליקציה בחנות, ומשם אפשר לפתוח אותה. האפליקציה הזו לא מפעילה חנייה ולא גובה כסף. את החנייה מפעילים באפליקציית התשלום, והיא קובעת את התעריף הסופי.</div></div>';
   }
 
-  var DEFAULTS = { permit:"none", myZone:"", blue:{}, blueSide:{}, remindMin:15, seg:null, dataVer:null };
+  var DEFAULTS = { permit:"none", myZone:"", blue:{}, blueSide:{}, remindMin:"15", seg:null, dataVer:null };
 
   /* =================== לוח שנה עברי =================== */
   var hebFmt = null, hebFmtHe = null;
@@ -425,7 +425,7 @@
   function load(){
     var c = Object.assign({}, DEFAULTS);
     try { var raw = localStorage.getItem(KEY); if(raw) c = Object.assign(c, JSON.parse(raw)); } catch(e){}
-    c.blue = c.blue || {}; c.blueSide = c.blueSide || {}; c.remindMin = +c.remindMin || 15;
+    c.blue = c.blue || {}; c.blueSide = c.blueSide || {}; c.remindMin = String(c.remindMin || "15");
     // מעבר מגרסה 3: ההגדרה של הושע (קוד רחוב 221)
     if(c.blueType && !c.blue["221"]){ c.blue["221"] = { type:c.blueType, start:c.prefStart || "", end:c.prefEnd || "" }; }
     delete c.blueType; delete c.prefStart; delete c.prefEnd; delete c.calib;
@@ -611,8 +611,10 @@
       sub:"הרחוב הזה גובל בין אזור " + zone + " לאזור " + cur.zb + ". לאחד מהם שעות תשלום ותעריף של מרכז העיר ולשני של שאר העיר, ולא מצאתי מקור שאומר מה חל כאן על מי שאין לו תו של אחד מהם. " + BORDER_SRC + " בדוק בתמרור ובאפליקציית החנייה." };
 
     if(bc.type === "unknown"){
-      var endU = activeEnd(paidWindows(now, zone), now);
+      var wsU = paidWindows(now, zone), endU = activeEnd(wsU, now), nxU = endU ? null : nextStart(wsU, now), unkU = firstUnknownAfter(now);
+      if(unkU && nxU && unkU < nxU) nxU = null;
       return { level:"unk", badge:"אין מידע ודאי", main:"לא ידוע אם מותר לך לחנות כאן", title:"אין לי מידע ודאי",
+        change:nxU || undefined, changeText:nxU ? "מתחיל תשלום (אם הכחול-לבן פתוח לכולם)" : undefined,
         sub:"לא ידוע אם הכחול-לבן ברחוב הזה פתוח לכולם או רק לבעלי תו אזור " + zl + ". בדוק בתמרור: אם כתוב \"לבעלי תו אזור ... בלבד\", אסור לך לחנות כאן. " +
             (endU ? "אם הוא פתוח לכולם: עכשיו בתשלום עד " + hhmm(endU) + "." : "אם הוא פתוח לכולם: עכשיו אין תשלום.") + " אחרי שבדקת, סמן בהגדרות." };
     }
@@ -911,6 +913,9 @@
     [/^נגמר הזמן המותר/, "להזיז את הרכב: נגמר הזמן המותר לפי התמרור"],
     [/^מתחיל יום שאין לי/, "לבדוק בתמרור אם צריך לשלם או להזיז את הרכב"]
   ];
+  // "15" או "15,30": כמה דקות לפני השינוי לשלוח התראה
+  function remindLeads(){ return String(cfg.remindMin || "15").split(",").map(Number).filter(function(n){ return n > 0; }).sort(function(a, b){ return b - a; }); }
+  function remindLabel(){ var l = remindLeads(); return l.length > 1 ? l.join(" ו-") + " דק׳" : l[0] + " דק׳"; }
   function remindAction(t){ for(var i=0;i<REMIND_ACTION.length;i++) if(REMIND_ACTION[i][0].test(t || "")) return REMIND_ACTION[i][1]; return null; }
   function icsEsc(t){ return String(t).replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
   function icsFold(line){
@@ -920,22 +925,23 @@
   }
   function icsTime(d){ return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); }
   function reminderIcs(cur, st, now){
-    var place = cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name, action = remindAction(st.changeText), mins = cfg.remindMin || 15;
-    var lead = Math.max(0, Math.min(mins, Math.floor((st.change - now) / 60000)));
+    var place = cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name, action = remindAction(st.changeText);
+    var maxLead = Math.max(0, Math.floor((st.change - now) / 60000));
+    var leads = remindLeads().map(function(m){ return Math.min(m, maxLead); }).filter(function(m, i, a){ return a.indexOf(m) === i; });
     var summary = "PARK-KING: " + action.split(":")[0] + " – " + place;
     var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PARK-KING//HE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
       "UID:" + now.getTime() + "-" + Math.random().toString(36).slice(2) + "@park-king", "DTSTAMP:" + icsTime(new Date()),
       "DTSTART:" + icsTime(st.change), "DTEND:" + icsTime(new Date(st.change.getTime() + 10 * 60000)),
       "SUMMARY:" + icsEsc(summary), "LOCATION:" + icsEsc(place + ", תל אביב-יפו"),
       "DESCRIPTION:" + icsEsc(st.changeText + " ב-" + hhmm(st.change) + ". מה לעשות: " + action + ". נוצר ב-PARK-KING, לפי המידע שהוצג ב-" + hhmm(now) + "."),
-      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEsc(summary), "TRIGGER:-PT" + lead + "M", "END:VALARM", "END:VEVENT", "END:VCALENDAR"];
+      ].concat([].concat.apply([], leads.map(function(m){ return ["BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEsc(summary), "TRIGGER:-PT" + m + "M", "END:VALARM"]; })))
+      .concat(["END:VEVENT", "END:VCALENDAR"]);
     return L.map(icsFold).join("\r\n") + "\r\n";
   }
   function remindHtml(cur, st, now){
     if(!st.change || !remindAction(st.changeText) || st.change <= now) return "";
     if(IN_CLAUDE) return '<div class="remind muted">⏰ תזכורת ביומן: הכפתור עובד באתר עצמו (odedmm111.github.io/park-king). בתוך claude.ai אי אפשר להוריד קבצים.</div>';
-    var mins = cfg.remindMin || 15;
-    return '<div class="remind"><a class="report-btn" id="remindLink" download="park-king-reminder.ics" href="data:text/calendar;charset=utf-8,' + encodeURIComponent(reminderIcs(cur, st, now)) + '">⏰ הזכר לי ' + mins + ' דק׳ לפני ' + hhmm(st.change) + '</a>' +
+    return '<div class="remind"><a class="report-btn" id="remindLink" download="park-king-reminder.ics" href="data:text/calendar;charset=utf-8,' + encodeURIComponent(reminderIcs(cur, st, now)) + '">⏰ הזכר לי ' + remindLabel() + ' לפני ' + hhmm(st.change) + '</a>' +
       '<div class="muted">נוצר אירוע ביומן של הטלפון עם התראה. באייפון: אחרי ההורדה, פתח את הקובץ והוסף ליומן.</div></div>';
   }
 
@@ -1067,7 +1073,7 @@
     el("blueTitle").textContent = cur ? "מה כתוב על התמרור ברחוב " + cur.name + (cur.side ? ", " + SIDE_NAME[cur.side] : "") : "מה כתוב על התמרור ברחוב";
     el("blueNoStreet").style.display = cur ? "none" : "";
     el("blueFields").style.display = cur ? "" : "none";
-    el("remindMin").value = String(cfg.remindMin || 15);
+    el("remindMin").value = String(cfg.remindMin || "15");
     if(cur){
       var bc = blueCfgFor(cur);
       el("blueType").value = bc.type; el("prefStart").value = bc.start || ""; el("prefEnd").value = bc.end || ""; el("limitMin").value = bc.limit ? String(bc.limit) : "";
@@ -1092,7 +1098,7 @@
       save(); renderPlace(); renderVerdict(); el("prefHours").style.display = el("blueType").value === "preferred" ? "" : "none";
     }); });
   });
-  el("remindMin").addEventListener("change", function(){ cfg.remindMin = +el("remindMin").value || 15; save(); renderPlace(); renderVerdict(); });
+  el("remindMin").addEventListener("change", function(){ cfg.remindMin = el("remindMin").value || "15"; save(); renderPlace(); renderVerdict(); });
   Array.prototype.forEach.call(document.querySelectorAll(".side-btns button"), function(b){
     b.addEventListener("click", function(){ state.gpsSide = b.getAttribute("data-side"); renderAll(); });
   });
