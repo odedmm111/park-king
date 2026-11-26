@@ -154,7 +154,7 @@
 <header>
   <div class="logo">P</div>
   <h1 dir="ltr">PARK-KING</h1>
-  <span class="tag">גרסה 4.11</span>
+  <span class="tag">גרסה 4.12</span>
 </header>
 
 <main>
@@ -233,6 +233,7 @@
       <li>תקנות התעבורה, התשכ"א-1961, תקנה 72: מקומות שאסור לעצור ולחנות בהם.<br><a href="https://judgments.org.il/laws/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA-%D7%94%D7%AA%D7%A2%D7%91%D7%95%D7%A8%D7%94-%D7%94%D7%AA%D7%A9%D7%9B%D7%90-1961/" target="_blank" rel="noopener">נוסח התקנות</a></li>
       <li>לוח התמרורים (תשע"א-2010, נוסח משולב 2020): 817 כחול-לבן, 818 אדום-לבן, 820 שטח אסור לחנייה מסומן בלבן, 439 תמרור מסר מחייב.<br><a href="https://www.nevo.co.il/law_html/law01/500_427.htm" target="_blank" rel="noopener">לוח התמרורים</a> · <a href="https://meyda.education.gov.il/files/zahav/ALYesodi/luach-tamrurim-2021.pdf" target="_blank" rel="noopener">נוסח משולב (PDF)</a></li>
       <li>עיריית תל אביב-יפו, הסדרי החניה 2025: אזורים, שעות תשלום (א׳–ה׳, שישי וערבי חג), תו חנייה, חנייה מועדפת ומוסדרת.<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת העירייה (PDF)</a></li>
+      <li>רחובות גובלים בין אזורים: "חניה ברחובות הגובלים בין אזורי חניה... תהיה ללא תשלום עבור בעלי תו מאחד האזורים הגובלים בשני צידי הרחוב". 138 קטעים זוהו כגובלים לפי מפת אזורי החנייה של העירייה (שכבה 544) והכתובות (שכבה 527).<br><a href="https://www.tel-aviv.gov.il/Forms/%D7%94%D7%A1%D7%93%D7%A8%D7%99%20%D7%94%D7%97%D7%A0%D7%99%D7%94%20%D7%94%D7%97%D7%93%D7%A9%D7%99%D7%9D%20%D7%A9%D7%9C%20%D7%AA%D7%9C%20%D7%90%D7%91%D7%99%D7%91-%D7%99%D7%A4%D7%95%202025.pdf" target="_blank" rel="noopener">חוברת הסדרי החנייה 2025</a></li>
       <li>עיריית תל אביב-יפו, מדיניות חנייה: 9 אזורים בתוקף.<br><a href="https://www.tel-aviv.gov.il/Residents/Transportation/Pages/parkingpolicy.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
       <li>אפליקציות התשלום: עיריית תל אביב-יפו מציינת את פנגו, סלו ואיזיפארק. הכפתורים מובילים לדפי האפליקציות הרשמיים ב-App Store וב-Google Play.<br><a href="https://www.tel-aviv.gov.il/About/Pages/transportation.aspx" target="_blank" rel="noopener">אתר העירייה</a></li>
       <li>תעריפים: חוק עזר לתל-אביב-יפו (העמדת רכב וחנייתו), התוספת השנייה, תיקון תשפ"ה-2024 (בתוקף מ-1.1.2025). אזורים 6, 7, 9, 10: ‏12.40 ₪ לשעה. שאר האזורים: 7 ₪ לשעה. תושב העיר מחוץ לאזור שלו: 30% הנחה (8.68 ₪ או 4.90 ₪), לפי חוברת העירייה.<br><a href="https://www.nevo.co.il/law_html/law01/mek_001_005.htm" target="_blank" rel="noopener">חוק העזר בנבו</a> · <a href="https://land.pango.co.il/FastPark/ParkingRates/ParkingRates" target="_blank" rel="noopener">טבלת התעריפים של פנגו</a></li>
@@ -520,8 +521,12 @@
   function current(){
     var i = (cfg.seg !== null && cfg.seg !== undefined) ? cfg.seg : state.gpsSeg;
     if(i === null || i === undefined || !D || !D.segs[i]) return null;
-    var s = D.segs[i];
-    return { i:i, s:s, k:String(s.k), name:D.names[s.k] || "", zone:s.z, tow:s.tz, manual: cfg.seg !== null && cfg.seg !== undefined };
+    var s = D.segs[i], manual = cfg.seg !== null && cfg.seg !== undefined;
+    // אזור: לפי הכתובת שנבחרה אם היא באזור אחר מאמצע הקטע; ברחוב גובל: גם האזור שמעבר לרחוב
+    var zone = (manual && cfg.addrZone) ? cfg.addrZone : s.z, zb = (D.border && D.border[i]) || null;
+    if(zb && zone === zb) zb = s.z;
+    if(zb === zone) zb = null;
+    return { i:i, s:s, k:String(s.k), name:D.names[s.k] || "", zone:zone, zb:zb, mixed: !!(zone && zb) && isCenter(zone) !== isCenter(zb), tow:s.tz, manual:manual };
   }
   function locateGPS(){
     state.gpsSeg = null;
@@ -537,10 +542,13 @@
   }
 
   /* =================== מנוע הכללים =================== */
-  function profile(zone){
+  function profile(zone, zb){
     var hasPermit = cfg.permit === "tlv";
-    return { hasPermit:hasPermit, ownZone: hasPermit && !!zone && cfg.myZone === zone };
+    return { hasPermit:hasPermit, ownZone: hasPermit && !!zone && (cfg.myZone === zone || (!!zb && cfg.myZone === zb)) };
   }
+  // "9" או "9 או 6" ברחוב גובל
+  function zoneLabel(cur){ return cur.zb ? cur.zone + " או " + cur.zb : cur.zone; }
+  var BORDER_SRC = "לפי חוברת הסדרי החנייה של העירייה (2025), ברחוב שגובל בין שני אזורים החנייה בכחול-לבן חינם לבעלי תו מכל אחד מהאזורים, בשני צידי הרחוב.";
   function blueCfg(k){ return cfg.blue[k] || { type:"unknown", start:"", end:"" }; }
   function prefWindowsFor(now, bc){
     if(bc.type !== "preferred") return null;
@@ -551,31 +559,35 @@
 
   // מצב הכחול-לבן בקטע הנוכחי, עבור המשתמש. כשאין מידע ודאי: רמה unk, בלי תשובה.
   function blueStatus(now, cur){
-    var zone = cur.zone, pr = profile(zone), info = dayInfo(now), bc = blueCfg(cur.k);
+    var zone = cur.zone, pr = profile(zone, cur.zb), info = dayInfo(now), bc = blueCfg(cur.k), zl = zoneLabel(cur);
 
     if(!zone) return { level:"unk", badge:"אין מידע ודאי", main:"הקטע לא נמצא באזור חנייה", title:"אין לי מידע ודאי",
       sub:"לפי מפת העירייה הקטע הזה לא נמצא באף אחד מ-9 אזורי החנייה, ולכן אני לא יודע מה הכללים בכחול-לבן כאן. בדוק בתמרור." };
 
     if(pr.ownZone) return { level:"ok", badge:"חינם עבורך", main:"חינם עבורך", title:"מותר לחנות, חינם",
-      sub:"יש לך תו של אזור " + zone + ", ואתה חונה באזור שלך. חינם בכל שעות היממה." };
+      sub: cur.zb ? "הרחוב הזה גובל בין אזור " + zone + " לאזור " + cur.zb + ", ויש לך תו של אזור " + cfg.myZone + ". " + BORDER_SRC + " חינם בכל שעות היממה."
+                  : "יש לך תו של אזור " + zone + ", ואתה חונה באזור שלך. חינם בכל שעות היממה." };
 
     if(!info.verified) return { level:"unk", badge:"אין מידע ודאי", main:"אין לי מידע ודאי להיום", title:"אין לי מידע ודאי",
       sub:"היום " + info.name + ". לא מצאתי מקור רשמי שאומר אם משלמים בכחול-לבן ביום כזה, ולכן אני לא נותן תשובה. בדוק בתמרור או באפליקציית החנייה." };
 
+    if(cur.mixed) return { level:"unk", badge:"אין מידע ודאי", main:"אין לי מידע ודאי על התשלום כאן", title:"אין לי מידע ודאי",
+      sub:"הרחוב הזה גובל בין אזור " + zone + " לאזור " + cur.zb + ". לאחד מהם שעות תשלום ותעריף של מרכז העיר ולשני של שאר העיר, ולא מצאתי מקור שאומר מה חל כאן על מי שאין לו תו של אחד מהם. " + BORDER_SRC + " בדוק בתמרור ובאפליקציית החנייה." };
+
     if(bc.type === "unknown"){
       var endU = activeEnd(paidWindows(now, zone), now);
       return { level:"unk", badge:"אין מידע ודאי", main:"לא ידוע אם מותר לך לחנות כאן", title:"אין לי מידע ודאי",
-        sub:"לא ידוע אם הכחול-לבן ברחוב הזה פתוח לכולם או רק לבעלי תו אזור " + zone + ". בדוק בתמרור: אם כתוב \"לבעלי תו אזור " + zone + " בלבד\", אסור לך לחנות כאן. " +
+        sub:"לא ידוע אם הכחול-לבן ברחוב הזה פתוח לכולם או רק לבעלי תו אזור " + zl + ". בדוק בתמרור: אם כתוב \"לבעלי תו אזור ... בלבד\", אסור לך לחנות כאן. " +
             (endU ? "אם הוא פתוח לכולם: עכשיו בתשלום עד " + hhmm(endU) + "." : "אם הוא פתוח לכולם: עכשיו אין תשלום.") + " אחרי שבדקת, סמן בהגדרות." };
     }
 
     var pw = prefWindowsFor(now, bc);
-    if(pw === "all") return { level:"no", badge:"לבעלי תו בלבד", main:"רק לבעלי תו אזור " + zone, title:"אסור לחנות בלי תו אזור " + zone,
-      sub:"לפי מה שסימנת, הכחול-לבן ברחוב הזה מיועד רק לבעלי תו של אזור " + zone + "." };
+    if(pw === "all") return { level:"no", badge:"לבעלי תו בלבד", main:"רק לבעלי תו אזור " + zl, title:"אסור לחנות בלי תו אזור " + zl,
+      sub:"לפי מה שסימנת, הכחול-לבן ברחוב הזה מיועד רק לבעלי תו של אזור " + zl + "." };
     if(pw){
       var pe = activeEnd(pw, now);
-      if(pe) return { level:"no", badge:"לבעלי תו בלבד", main:"עכשיו רק לבעלי תו אזור " + zone, title:"עכשיו רק לבעלי תו אזור " + zone,
-        sub:"לפי התמרור, בשעות האלה החנייה מותרת רק לבעלי תו של אזור " + zone + ".", change:pe, changeText:"נגמרות שעות התו" };
+      if(pe) return { level:"no", badge:"לבעלי תו בלבד", main:"עכשיו רק לבעלי תו אזור " + zl, title:"עכשיו רק לבעלי תו אזור " + zl,
+        sub:"לפי התמרור, בשעות האלה החנייה מותרת רק לבעלי תו של אזור " + zl + ".", change:pe, changeText:"נגמרות שעות התו" };
     }
     var prefNext = (pw && pw !== "all") ? nextStart(pw, now) : null;
 
@@ -586,7 +598,7 @@
       if(pr.hasPermit) return { level:"cond", badge:"בתשלום, עם הטבת תושב", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
         sub: cfg.myZone
           ? "התו שלך מאזור " + cfg.myZone + ". מחוץ לאזור שלך: שעתיים ראשונות ביממה חינם (במצטבר), אחר כך " + rateResident(zone) + " ₪ לשעה. חובה להפעיל אפליקציית חנייה מהדקה הראשונה."
-          : "אם התו שלך של אזור " + zone + ", החנייה חינם. אם לא: שעתיים חינם ביממה דרך אפליקציית חנייה, ואחר כך " + rateResident(zone) + " ₪ לשעה. בחר את אזור התו בהגדרות.",
+          : "אם התו שלך של אזור " + zl + ", החנייה חינם. אם לא: שעתיים חינם ביממה דרך אפליקציית חנייה, ואחר כך " + rateResident(zone) + " ₪ לשעה. בחר את אזור התו בהגדרות.",
         change:ch, changeText:chText };
       return { level:"cond", badge:"בתשלום", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
         sub: "תעריף מבקר: " + rateVisitor(zone) + " ₪ לשעה. משלמים דרך אפליקציית חנייה.",
@@ -769,7 +781,7 @@
     var cur = current();
     var extra = cur && cur.manual ? '<div class="loc-line"><b>בחרת: ' + esc(cfg.addr || (cur.name + ", " + segLabel(cur.i))) + '</b> <button class="btn small" id="clearSeg">' + (state.pos ? "חזרה ל-GPS" : "ניקוי") + "</button></div>" : "";
     el("gpsLine").innerHTML = esc(g) + extra;
-    var cb = el("clearSeg"); if(cb) cb.onclick = function(){ cfg.seg = null; cfg.addr = null; cfg.addrPt = null; save(); state.pickStreet = null; renderAll(); };
+    var cb = el("clearSeg"); if(cb) cb.onclick = function(){ cfg.seg = null; cfg.addr = null; cfg.addrPt = null; cfg.addrZone = null; save(); state.pickStreet = null; renderAll(); };
 
     // תוצאות חיפוש
     var q = el("streetInput").value.trim(), box = el("streetResults"), sbox = el("segResults");
@@ -783,7 +795,7 @@
       var ax = latR >= lonR * 0.85 ? 0 : 1;
       ids.sort(function(a, b){ return segMid(D.segs[a])[ax] - segMid(D.segs[b])[ax]; });
       sbox.innerHTML = '<div class="muted">' + esc(nm) + ': באיזה קטע אתה? (' + ids.length + ')</div>' +
-        ids.map(function(i){ var s = D.segs[i]; return '<button data-seg="' + i + '"' + (cfg.seg === i ? ' class="cur"' : '') + '>' + esc(segLabel(i)) + '<span class="r-sub">אזור חנייה ' + esc(s.z || "לא ידוע") + " · " + s.len + " מ׳</span></button>"; }).join("");
+        ids.map(function(i){ var s = D.segs[i]; return '<button data-seg="' + i + '"' + (cfg.seg === i ? ' class="cur"' : '') + '>' + esc(segLabel(i)) + '<span class="r-sub">אזור חנייה ' + esc(s.z || "לא ידוע") + (D.border && D.border[i] ? " ו-" + esc(D.border[i]) + " (רחוב גובל)" : "") + " · " + s.len + " מ׳</span></button>"; }).join("");
       Array.prototype.forEach.call(sbox.querySelectorAll("button[data-seg]"), function(b){
         b.onclick = function(){ chooseSeg(+b.getAttribute("data-seg"), null); };
       });
@@ -799,7 +811,7 @@
     box.innerHTML = hits.slice(0, 8).map(function(s){
       if(num){
         var a = findAddr(s.k, num);
-        if(a) return '<button data-k="' + esc(s.k) + '" data-seg="' + a[1] + '" data-addr="' + esc(s.name + " " + a[0]) + '" data-pt="' + (a[2] ? a[2] + "," + a[3] : "") + '">' + esc(s.name + " " + a[0]) + '<span class="r-sub">' + esc(segLabel(a[1])) + '</span></button>';
+        if(a) return '<button data-k="' + esc(s.k) + '" data-seg="' + a[1] + '" data-addr="' + esc(s.name + " " + a[0]) + '" data-pt="' + (a[2] ? a[2] + "," + a[3] : "") + '" data-zone="' + esc(a[4] || "") + '">' + esc(s.name + " " + a[0]) + '<span class="r-sub">' + esc(segLabel(a[1])) + '</span></button>';
         return '<button data-k="' + esc(s.k) + '">' + esc(s.name) + '<span class="r-sub">אין במפה מספר ' + esc(num) + ' ברחוב הזה. לחץ כדי לבחור קטע.</span></button>';
       }
       return '<button data-k="' + esc(s.k) + '">' + esc(s.name) + '<span class="r-sub">' + BY_STREET[s.k].length + " קטעים · אפשר גם להקליד מספר בית</span></button>";
@@ -807,7 +819,7 @@
     Array.prototype.forEach.call(box.querySelectorAll("button[data-k]"), function(b){
       b.onclick = function(){
         var k = b.getAttribute("data-k"), sg = b.getAttribute("data-seg");
-        if(sg !== null){ var pt = b.getAttribute("data-pt"); chooseSeg(+sg, b.getAttribute("data-addr"), pt ? pt.split(",").map(Number) : null); return; }
+        if(sg !== null){ var pt = b.getAttribute("data-pt"); chooseSeg(+sg, b.getAttribute("data-addr"), pt ? pt.split(",").map(Number) : null, b.getAttribute("data-zone") || null); return; }
         if(BY_STREET[k].length === 1){ chooseSeg(BY_STREET[k][0], null); return; }
         state.pickStreet = k; renderWhere();
       };
@@ -820,8 +832,8 @@
     for(var j=0;j<list.length;j++) if(list[j][0] === base) return list[j];
     return null;
   }
-  function chooseSeg(i, addrLabel, pt){
-    cfg.seg = i; cfg.addr = addrLabel || null; cfg.addrPt = pt || null; save();
+  function chooseSeg(i, addrLabel, pt, addrZone){
+    cfg.seg = i; cfg.addr = addrLabel || null; cfg.addrPt = pt || null; cfg.addrZone = addrZone || null; save();
     state.pickStreet = null; el("streetInput").value = ""; renderAll();
     el("place").scrollIntoView({ behavior:"smooth", block:"start" });
   }
@@ -841,7 +853,7 @@
     if(cur){
       L.push("כתובת: " + place);
       L.push("קטע: " + cur.name + " " + segLabel(cur.i));
-      L.push("אזור חנייה: " + (cur.zone || "מחוץ לאזורי החנייה"));
+      L.push("אזור חנייה: " + (cur.zone || "מחוץ לאזורי החנייה") + (cur.zb ? " (רחוב גובל עם אזור " + cur.zb + ")" : ""));
       try { L.push("מה האפליקציה הציגה: " + blueStatus(now, cur).main); } catch(e){}
     } else L.push("לא נבחרה כתובת");
     if(state.curb){ var c = CURBS.filter(function(x){ return x[0] === state.curb; })[0]; try { L.push("אבן שפה שנבחרה: " + (c ? c[2] : state.curb) + " – " + evaluate(now, state.curb).title); } catch(e){} }
@@ -867,12 +879,12 @@
     var title, sub;
     if(cur){
       title = cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name;
-      sub = (cur.zone ? "אזור חנייה " + cur.zone : "מחוץ לאזורי החנייה") + (cur.manual ? " · נבחר ידנית" : " · לפי GPS");
+      sub = (cur.zone ? "אזור חנייה " + cur.zone + (cur.zb ? " · רחוב גובל עם אזור " + cur.zb : "") : "מחוץ לאזורי החנייה") + (cur.manual ? " · נבחר ידנית" : " · לפי GPS");
     } else { title = "עוד לא נבחרה כתובת"; sub = "הקלד רחוב ומספר בית למעלה, למשל: עמוס 13."; }
     html += '<div class="place-head"><div class="pin">📍</div><div><div class="place-title">' + esc(title) + '</div><div class="muted">' + esc(sub) + '</div></div></div>';
 
     var special = info.type !== "weekday";
-    var sched = cur && cur.zone ? paySchedule(now, cur.zone) : null;
+    var sched = cur && cur.zone ? (cur.mixed ? { unknown:true } : paySchedule(now, cur.zone)) : null;
     html += '<div class="day-strip' + (special ? ' special' : '') + '"><b>היום: ' + esc(info.name) + '</b>' + (hd ? ' <span class="muted">· ' + esc(hd) + '</span>' : '') +
             (sched ? '<div class="muted">' + (sched.unknown ? "שעות התשלום היום: אין לי מידע ודאי." : sched.start ? "שעות תשלום בכחול-לבן: " + sched.start + "–" + sched.end : "אין היום שעות תשלום בכחול-לבן") + '</div>' : '') + '</div>';
 
@@ -896,12 +908,13 @@
       }
 
       if(cur.zone){
-        var pr = profile(cur.zone), z = cur.zone, center = isCenter(z);
+        var pr = profile(cur.zone, cur.zb), z = cur.zone, center = isCenter(z), noRate = "אין לי מידע ודאי על התעריף";
         var meOwn = pr.ownZone, meOther = pr.hasPermit && !pr.ownZone, meVisitor = !pr.hasPermit;
         html += '<div class="sec"><div class="sec-h">מה משלמים כאן ' + (cfg.permit === "none" && !cfg.myZone ? "" : "(השורה שלך מודגשת)") + '</div>' +
-          '<div class="who' + (meOwn ? ' me' : '') + '"><span>בעלי תו אזור ' + esc(z) + '</span><b>חינם, כל היום</b></div>' +
-          '<div class="who' + (meOther ? ' me' : '') + '"><span>תו תל אביב מאזור אחר</span><b>שעתיים חינם, אחר כך ' + rateResident(z) + ' ₪</b></div>' +
-          '<div class="who' + (meVisitor ? ' me' : '') + '"><span>מבקר בלי תו</span><b>' + rateVisitor(z) + ' ₪ לשעה</b></div></div>';
+          '<div class="who' + (meOwn ? ' me' : '') + '"><span>בעלי תו אזור ' + esc(zoneLabel(cur)) + '</span><b>חינם, כל היום</b></div>' +
+          '<div class="who' + (meOther ? ' me' : '') + '"><span>תו תל אביב מאזור אחר</span><b>' + (cur.mixed ? noRate : 'שעתיים חינם, אחר כך ' + rateResident(z) + ' ₪') + '</b></div>' +
+          '<div class="who' + (meVisitor ? ' me' : '') + '"><span>מבקר בלי תו</span><b>' + (cur.mixed ? noRate : rateVisitor(z) + ' ₪ לשעה') + '</b></div>' +
+          (cur.zb ? '<div class="muted" style="margin-top:6px">' + esc(BORDER_SRC) + '</div>' : '') + '</div>';
         html += payHtml();
       }
     }
@@ -982,7 +995,7 @@
     if(cur){
       var bc = blueCfg(cur.k);
       el("blueType").value = bc.type; el("prefStart").value = bc.start || ""; el("prefEnd").value = bc.end || "";
-      el("prefOpt").textContent = "חנייה לבעלי תו אזור " + (cur.zone || "?") + " בלבד (מועדפת)";
+      el("prefOpt").textContent = "חנייה לבעלי תו אזור " + (cur.zone ? zoneLabel(cur) : "?") + " בלבד (מועדפת)";
       el("prefHours").style.display = bc.type === "preferred" ? "" : "none";
     }
   }
