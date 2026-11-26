@@ -139,6 +139,11 @@
   .near-line{display:block;width:100%;margin-top:10px;padding:10px 12px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;text-align:start;cursor:pointer}
   .near-line .muted{white-space:nowrap}
   .report{margin-top:16px}
+  .remind{margin-top:10px}
+  .remind .muted{margin-top:6px}
+  .side-btns{display:flex;gap:8px;margin-top:6px}
+  .side-btns button{flex:1;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card);font:inherit}
+  .side-btns button[aria-pressed=true]{border-color:var(--ink);font-weight:700}
   .report-btn{display:flex;align-items:center;justify-content:center;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font-weight:600;text-decoration:none}
   .report .muted{margin-top:6px}
   .restrict .facts li{border-bottom-color:rgba(185,28,28,.15)}
@@ -154,7 +159,7 @@
 <header>
   <div class="logo">P</div>
   <h1 dir="ltr">PARK-KING</h1>
-  <span class="tag">גרסה 4.12</span>
+  <span class="tag">גרסה 4.13</span>
 </header>
 
 <main>
@@ -206,6 +211,11 @@
     <div class="set-title" id="blueTitle">מה כתוב על התמרור ברחוב</div>
     <div id="blueNoStreet" class="muted" style="margin-top:6px">בחר קודם רחוב למעלה.</div>
     <div id="blueFields">
+      <div class="field" id="sideField">
+        <label>באיזה צד של הרחוב עצרת?</label>
+        <div class="side-btns"><button type="button" data-side="odd" aria-pressed="false">מספרים אי-זוגיים</button><button type="button" data-side="even" aria-pressed="false">מספרים זוגיים</button></div>
+        <small>כשמקלידים כתובת, הצד נקבע לפי מספר הבית. ב-GPS בחר כאן, כי המיקום לא מדויק מספיק כדי לדעת צד.</small>
+      </div>
       <div class="field">
         <label for="blueType">סוג החנייה בכחול-לבן</label>
         <select id="blueType">
@@ -213,13 +223,26 @@
           <option value="regulated">חנייה בתשלום לכל אחד (מוסדרת)</option>
           <option value="preferred" id="prefOpt">חנייה לבעלי תו האזור בלבד (מועדפת)</option>
         </select>
-        <small>יש בעיר שני סוגים של כחול-לבן. רק התמרור ברחוב אומר איזה מהם יש כאן. מה שתבחר נשמר לרחוב הזה בלבד.</small>
+        <small id="blueScope">יש בעיר שני סוגים של כחול-לבן. רק התמרור ברחוב אומר איזה מהם יש כאן.</small>
       </div>
       <div class="field" id="prefHours">
         <label>בשעות (כמו שכתוב על התמרור)</label>
         <div class="pair"><input type="time" id="prefStart"><span>עד</span><input type="time" id="prefEnd"></div>
         <small>אם התמרור לא מציין שעות, השאר ריק. אז האפליקציה תניח שזה כל היום.</small>
       </div>
+      <div class="field">
+        <label for="limitMin">הגבלת זמן חנייה (אם כתוב על התמרור)</label>
+        <select id="limitMin"><option value="">אין הגבלה בתמרור</option><option value="60">עד שעה</option><option value="120">עד שעתיים</option><option value="180">עד 3 שעות</option><option value="240">עד 4 שעות</option></select>
+        <small>האפליקציה סופרת את הזמן מהרגע שבו בדקת, ומזכירה לפני שהוא נגמר.</small>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="set-title">תזכורות</div>
+    <div class="field">
+      <label for="remindMin">להזכיר לי לפני שהמצב משתנה</label>
+      <select id="remindMin"><option value="5">5 דקות לפני</option><option value="15">15 דקות לפני</option><option value="30">30 דקות לפני</option></select>
+      <small>התזכורת נכנסת ליומן של הטלפון עם התראה, גם כשהאפליקציה סגורה.</small>
     </div>
 
     <hr class="sep">
@@ -282,7 +305,7 @@
       '<div class="muted" style="margin-top:6px">הכפתור פותח את דף האפליקציה בחנות, ומשם אפשר לפתוח אותה. האפליקציה הזו לא מפעילה חנייה ולא גובה כסף. את החנייה מפעילים באפליקציית התשלום, והיא קובעת את התעריף הסופי.</div></div>';
   }
 
-  var DEFAULTS = { permit:"none", myZone:"", blue:{}, seg:null, dataVer:null };
+  var DEFAULTS = { permit:"none", myZone:"", blue:{}, blueSide:{}, remindMin:15, seg:null, dataVer:null };
 
   /* =================== לוח שנה עברי =================== */
   var hebFmt = null, hebFmtHe = null;
@@ -402,7 +425,7 @@
   function load(){
     var c = Object.assign({}, DEFAULTS);
     try { var raw = localStorage.getItem(KEY); if(raw) c = Object.assign(c, JSON.parse(raw)); } catch(e){}
-    c.blue = c.blue || {};
+    c.blue = c.blue || {}; c.blueSide = c.blueSide || {}; c.remindMin = +c.remindMin || 15;
     // מעבר מגרסה 3: ההגדרה של הושע (קוד רחוב 221)
     if(c.blueType && !c.blue["221"]){ c.blue["221"] = { type:c.blueType, start:c.prefStart || "", end:c.prefEnd || "" }; }
     delete c.blueType; delete c.prefStart; delete c.prefEnd; delete c.calib;
@@ -415,7 +438,7 @@
     var tag = el("savedTag"); tag.classList.add("show"); clearTimeout(save._t); save._t = setTimeout(function(){ tag.classList.remove("show"); }, 1200);
   }
   var cfg = load();
-  var state = { pos:null, accuracy:null, gpsSeg:null, geoError:null, curb:null, when:null, pickStreet:null };
+  var state = { pos:null, accuracy:null, gpsSeg:null, gpsSide:null, geoError:null, curb:null, when:null, pickStreet:null };
 
   /* =================== גאומטריה =================== */
   function toXY(q, k){ return [q[1]*111320*k, q[0]*110540]; }
@@ -526,7 +549,11 @@
     var zone = (manual && cfg.addrZone) ? cfg.addrZone : s.z, zb = (D.border && D.border[i]) || null;
     if(zb && zone === zb) zb = s.z;
     if(zb === zone) zb = null;
-    return { i:i, s:s, k:String(s.k), name:D.names[s.k] || "", zone:zone, zb:zb, mixed: !!(zone && zb) && isCenter(zone) !== isCenter(zb), tow:s.tz, manual:manual };
+    // צד הרחוב: לפי מספר הבית (זוגי / אי-זוגי). במצב GPS: לפי מה שהמשתמש בחר
+    var side = null;
+    if(manual && cfg.addr){ var mm = /(\d+)\D*$/.exec(cfg.addr); if(mm) side = (+mm[1]) % 2 ? "odd" : "even"; }
+    else if(!manual && state.gpsSide) side = state.gpsSide;
+    return { i:i, s:s, k:String(s.k), name:D.names[s.k] || "", zone:zone, zb:zb, mixed: !!(zone && zb) && isCenter(zone) !== isCenter(zb), tow:s.tz, manual:manual, side:side };
   }
   function locateGPS(){
     state.gpsSeg = null;
@@ -550,6 +577,15 @@
   function zoneLabel(cur){ return cur.zb ? cur.zone + " או " + cur.zb : cur.zone; }
   var BORDER_SRC = "לפי חוברת הסדרי החנייה של העירייה (2025), ברחוב שגובל בין שני אזורים החנייה בכחול-לבן חינם לבעלי תו מכל אחד מהאזורים, בשני צידי הרחוב.";
   function blueCfg(k){ return cfg.blue[k] || { type:"unknown", start:"", end:"" }; }
+  // הגדרת הכחול-לבן: קודם לצד הזה של הקטע, ואם אין, לכל הרחוב (כמו בגרסאות הקודמות)
+  function sideKey(cur){ return cur.side ? cur.i + ":" + cur.side : null; }
+  function blueCfgFor(cur){
+    var sk = sideKey(cur);
+    if(sk && cfg.blueSide[sk]) return Object.assign({ scope:"side" }, cfg.blueSide[sk]);
+    if(cfg.blue[cur.k]) return Object.assign({ scope:"street" }, cfg.blue[cur.k]);
+    return { type:"unknown", start:"", end:"", scope:"none" };
+  }
+  var SIDE_NAME = { odd:"צד המספרים האי-זוגיים", even:"צד המספרים הזוגיים" };
   function prefWindowsFor(now, bc){
     if(bc.type !== "preferred") return null;
     if(!bc.start || !bc.end) return "all";
@@ -559,7 +595,7 @@
 
   // מצב הכחול-לבן בקטע הנוכחי, עבור המשתמש. כשאין מידע ודאי: רמה unk, בלי תשובה.
   function blueStatus(now, cur){
-    var zone = cur.zone, pr = profile(zone, cur.zb), info = dayInfo(now), bc = blueCfg(cur.k), zl = zoneLabel(cur);
+    var zone = cur.zone, pr = profile(zone, cur.zb), info = dayInfo(now), bc = blueCfgFor(cur), zl = zoneLabel(cur);
 
     if(!zone) return { level:"unk", badge:"אין מידע ודאי", main:"הקטע לא נמצא באזור חנייה", title:"אין לי מידע ודאי",
       sub:"לפי מפת העירייה הקטע הזה לא נמצא באף אחד מ-9 אזורי החנייה, ולכן אני לא יודע מה הכללים בכחול-לבן כאן. בדוק בתמרור." };
@@ -595,6 +631,9 @@
     if(pEnd){
       var ch = pEnd, chText = "נגמרות שעות התשלום";
       if(prefNext && prefNext < pEnd){ ch = prefNext; chText = "מתחילות שעות לבעלי תו בלבד"; }
+      // הגבלת זמן לפי התמרור (בשעות התשלום), נספרת מעכשיו
+      if(+bc.limit > 0){ var lim = new Date(now.getTime() + bc.limit * 60000);
+        if(lim < ch){ ch = lim; chText = "נגמר הזמן המותר (" + (bc.limit / 60) + " שעות לפי התמרור, אם חנית עכשיו)"; } }
       if(pr.hasPermit) return { level:"cond", badge:"בתשלום, עם הטבת תושב", main:"בתשלום עד " + hhmm(pEnd), title:"מותר לחנות, בתשלום",
         sub: cfg.myZone
           ? "התו שלך מאזור " + cfg.myZone + ". מחוץ לאזור שלך: שעתיים ראשונות ביממה חינם (במצטבר), אחר כך " + rateResident(zone) + " ₪ לשעה. חובה להפעיל אפליקציית חנייה מהדקה הראשונה."
@@ -852,7 +891,7 @@
     L.push("מה לא נכון? (כתוב כאן)", "", "", "מה כתוב על התמרור, או מה רואים בשטח:", "", "", "---- פרטים שהאפליקציה הוסיפה ----");
     if(cur){
       L.push("כתובת: " + place);
-      L.push("קטע: " + cur.name + " " + segLabel(cur.i));
+      L.push("קטע: " + cur.name + " " + segLabel(cur.i) + (cur.side ? ", " + SIDE_NAME[cur.side] : ""));
       L.push("אזור חנייה: " + (cur.zone || "מחוץ לאזורי החנייה") + (cur.zb ? " (רחוב גובל עם אזור " + cur.zb + ")" : ""));
       try { L.push("מה האפליקציה הציגה: " + blueStatus(now, cur).main); } catch(e){}
     } else L.push("לא נבחרה כתובת");
@@ -863,6 +902,41 @@
   function reportHtml(){
     return '<div class="report"><a id="reportLink" class="report-btn" href="mailto:' + REPORT_TO + '">המידע כאן לא נכון? דווח על טעות</a>' +
       '<div class="muted">ייפתח מייל מוכן עם הכתובת ומה שהאפליקציה הציגה. הוא נשלח רק אם תלחץ "שלח". אפשר גם לכתוב ישירות ל-<span dir="ltr">' + REPORT_TO + '</span>.</div></div>';
+  }
+
+  // תזכורת ביומן: קובץ ics עם התראה לפני שהמצב משתנה
+  var REMIND_ACTION = [
+    [/^מתחיל תשלום/, "להפעיל אפליקציית חנייה או להזיז את הרכב"],
+    [/^מתחילות שעות לבעלי תו/, "להזיז את הרכב: מהשעה הזו החנייה רק לבעלי תו"],
+    [/^נגמר הזמן המותר/, "להזיז את הרכב: נגמר הזמן המותר לפי התמרור"],
+    [/^מתחיל יום שאין לי/, "לבדוק בתמרור אם צריך לשלם או להזיז את הרכב"]
+  ];
+  function remindAction(t){ for(var i=0;i<REMIND_ACTION.length;i++) if(REMIND_ACTION[i][0].test(t || "")) return REMIND_ACTION[i][1]; return null; }
+  function icsEsc(t){ return String(t).replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+  function icsFold(line){
+    var enc = new TextEncoder(), out = [], cur = "", n = 0;
+    Array.from(line).forEach(function(ch){ var b = enc.encode(ch).length; if(n + b > (out.length ? 74 : 75)){ out.push(cur); cur = ""; n = 0; } cur += ch; n += b; });
+    out.push(cur); return out.join("\r\n ");
+  }
+  function icsTime(d){ return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); }
+  function reminderIcs(cur, st, now){
+    var place = cur.manual && cfg.addr ? cfg.addr : "רחוב " + cur.name, action = remindAction(st.changeText), mins = cfg.remindMin || 15;
+    var lead = Math.max(0, Math.min(mins, Math.floor((st.change - now) / 60000)));
+    var summary = "PARK-KING: " + action.split(":")[0] + " – " + place;
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PARK-KING//HE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
+      "UID:" + now.getTime() + "-" + Math.random().toString(36).slice(2) + "@park-king", "DTSTAMP:" + icsTime(new Date()),
+      "DTSTART:" + icsTime(st.change), "DTEND:" + icsTime(new Date(st.change.getTime() + 10 * 60000)),
+      "SUMMARY:" + icsEsc(summary), "LOCATION:" + icsEsc(place + ", תל אביב-יפו"),
+      "DESCRIPTION:" + icsEsc(st.changeText + " ב-" + hhmm(st.change) + ". מה לעשות: " + action + ". נוצר ב-PARK-KING, לפי המידע שהוצג ב-" + hhmm(now) + "."),
+      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEsc(summary), "TRIGGER:-PT" + lead + "M", "END:VALARM", "END:VEVENT", "END:VCALENDAR"];
+    return L.map(icsFold).join("\r\n") + "\r\n";
+  }
+  function remindHtml(cur, st, now){
+    if(!st.change || !remindAction(st.changeText) || st.change <= now) return "";
+    if(IN_CLAUDE) return '<div class="remind muted">⏰ תזכורת ביומן: הכפתור עובד באתר עצמו (odedmm111.github.io/park-king). בתוך claude.ai אי אפשר להוריד קבצים.</div>';
+    var mins = cfg.remindMin || 15;
+    return '<div class="remind"><a class="report-btn" id="remindLink" download="park-king-reminder.ics" href="data:text/calendar;charset=utf-8,' + encodeURIComponent(reminderIcs(cur, st, now)) + '">⏰ הזכר לי ' + mins + ' דק׳ לפני ' + hhmm(st.change) + '</a>' +
+      '<div class="muted">נוצר אירוע ביומן של הטלפון עם התראה. באייפון: אחרי ההורדה, פתח את הקובץ והוסף ליומן.</div></div>';
   }
 
   function curbHtml(){
@@ -894,6 +968,7 @@
       var chLine = st.change ? esc(st.changeText) + ": " + esc(fmtAt(now, st.change)) + " (" + esc(fmtLeft(st.change - now)) + ")" : "";
       html += '<div class="status ' + st.level + '"><div class="s-label">בכחול-לבן כאן, עבורך, עכשיו</div><div class="s-main">' + esc(st.main) + '</div>' +
               (chLine ? '<div class="s-sub">' + chLine + '</div>' : '') + '</div>';
+      html += remindHtml(cur, st, now);
       (st.warn || []).filter(Boolean).forEach(function(w){ html += '<div class="warn">⚠️ ' + esc(w) + '</div>'; });
       var rs = restrictions(cur), rsFull = rs.filter(function(f){ return f.full; }), rsNear = rs.filter(function(f){ return !f.full; });
       // אדום רק כשעבודות חוסמות את הרחוב לגמרי ביום הנבחר
@@ -989,12 +1064,18 @@
     el("permit").value = cfg.permit; el("myZone").value = cfg.myZone;
     el("myZoneField").style.display = cfg.permit === "tlv" ? "" : "none";
     var cur = current();
-    el("blueTitle").textContent = cur ? "מה כתוב על התמרור ברחוב " + cur.name : "מה כתוב על התמרור ברחוב";
+    el("blueTitle").textContent = cur ? "מה כתוב על התמרור ברחוב " + cur.name + (cur.side ? ", " + SIDE_NAME[cur.side] : "") : "מה כתוב על התמרור ברחוב";
     el("blueNoStreet").style.display = cur ? "none" : "";
     el("blueFields").style.display = cur ? "" : "none";
+    el("remindMin").value = String(cfg.remindMin || 15);
     if(cur){
-      var bc = blueCfg(cur.k);
-      el("blueType").value = bc.type; el("prefStart").value = bc.start || ""; el("prefEnd").value = bc.end || "";
+      var bc = blueCfgFor(cur);
+      el("blueType").value = bc.type; el("prefStart").value = bc.start || ""; el("prefEnd").value = bc.end || ""; el("limitMin").value = bc.limit ? String(bc.limit) : "";
+      el("sideField").style.display = cur.manual ? "none" : "";
+      Array.prototype.forEach.call(document.querySelectorAll(".side-btns button"), function(b){ b.setAttribute("aria-pressed", String(cur.side === b.getAttribute("data-side"))); });
+      el("blueScope").textContent = cur.side
+        ? "נשמר ל" + SIDE_NAME[cur.side] + " ב" + cur.name + " " + segLabel(cur.i) + (bc.scope === "street" ? ". כרגע מוצגת ההגדרה שסימנת לכל הרחוב." : ".")
+        : "לא ידוע באיזה צד אתה. מה שתבחר יישמר לכל הרחוב. בחר צד כדי לשמור לצד הזה בלבד.";
       el("prefOpt").textContent = "חנייה לבעלי תו אזור " + (cur.zone ? zoneLabel(cur) : "?") + " בלבד (מועדפת)";
       el("prefHours").style.display = bc.type === "preferred" ? "" : "none";
     }
@@ -1003,14 +1084,19 @@
 
   /* =================== אירועים =================== */
   ["permit","myZone"].forEach(function(f){ el(f).addEventListener("change", function(){ cfg[f] = el(f).value; save(); renderAll(); }); });
-  ["blueType","prefStart","prefEnd"].forEach(function(f){
+  ["blueType","prefStart","prefEnd","limitMin"].forEach(function(f){
     ["input","change"].forEach(function(ev){ el(f).addEventListener(ev, function(){
       var cur = current(); if(!cur) return;
-      cfg.blue[cur.k] = { type:el("blueType").value, start:el("prefStart").value, end:el("prefEnd").value };
+      var v = { type:el("blueType").value, start:el("prefStart").value, end:el("prefEnd").value, limit: +el("limitMin").value || 0 }, sk = sideKey(cur);
+      if(sk) cfg.blueSide[sk] = v; else cfg.blue[cur.k] = v;
       save(); renderPlace(); renderVerdict(); el("prefHours").style.display = el("blueType").value === "preferred" ? "" : "none";
     }); });
   });
-  el("resetBtn").onclick = function(){ cfg = Object.assign({}, DEFAULTS, { blue:{} }); save(); state.pickStreet = null; renderAll(); };
+  el("remindMin").addEventListener("change", function(){ cfg.remindMin = +el("remindMin").value || 15; save(); renderPlace(); renderVerdict(); });
+  Array.prototype.forEach.call(document.querySelectorAll(".side-btns button"), function(b){
+    b.addEventListener("click", function(){ state.gpsSide = b.getAttribute("data-side"); renderAll(); });
+  });
+  el("resetBtn").onclick = function(){ cfg = Object.assign({}, DEFAULTS, { blue:{}, blueSide:{} }); state.gpsSide = null; save(); state.pickStreet = null; renderAll(); };
   el("streetInput").addEventListener("input", function(){ state.pickStreet = null; renderWhere(); });
 
   el("whenInput").addEventListener("change", function(){ var v = el("whenInput").value; state.when = v ? new Date(v) : null; renderAll(); });
